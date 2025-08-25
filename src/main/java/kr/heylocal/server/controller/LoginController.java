@@ -2,46 +2,43 @@ package kr.heylocal.server.controller;
 
 import kr.heylocal.server.dto.ResponseDto;
 import kr.heylocal.server.dto.login.*;
-import kr.heylocal.server.util.TLSClientUtil;
+import kr.heylocal.server.service.LoginService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+@RequiredArgsConstructor
 @Slf4j
 public class LoginController {
+    private final LoginService loginService;
     //Access Token 재발급 받기
     @PostMapping("refresh-token")
-    public ResponseEntity<ResponseDto<ResponseTokenDto>> refreshToken(@RequestBody RefreshTokenBodyDto bodyDto) {
-        ResponseDto<ResponseTokenDto> result = TLSClientUtil.callTossPostApi("/user/oauth2/refresh-token", bodyDto, ResponseDto.class, null);
-        return ResponseEntity.ok(result);
+    public ResponseDto<ResponseTokenDto> refreshToken(@RequestBody RefreshTokenBodyDto bodyDto) {
+        return loginService.refreshToken(bodyDto);
     }
 
     //Access Token 받기
     @PostMapping("generate-token")
-    public ResponseEntity<ResponseDto<ResponseTokenDto>> generateToken(@RequestBody GenerateTokenBodyDto bodyDto) {
-        ResponseDto<ResponseTokenDto> result = TLSClientUtil.callTossPostApi("/user/oauth2/generate-token", bodyDto, ResponseDto.class,null);
-        return ResponseEntity.ok(result);
+    public ResponseDto<ResponseTokenDto> generateToken(@RequestBody GenerateTokenBodyDto bodyDto) {
+        return loginService.generateToken(bodyDto);
     }
 
     //userKey로 로그인 연결 끊기
     @PostMapping("remove-by-user-key")
-    public ResponseEntity<ResponseDto<ResponseUserKeyDto>> removeByUserKey(@RequestBody RemoveByUserKeyBodyDto bodyDto) {
-        ResponseDto<ResponseUserKeyDto> result = TLSClientUtil.callTossPostApi("/user/oauth2/remove-by-user-key", bodyDto,ResponseDto.class, null);
-        return ResponseEntity.ok(result);
+    public ResponseDto<ResponseUserKeyDto> removeByUserKey(@RequestBody RemoveByUserKeyBodyDto bodyDto) {
+        return loginService.removeByUserKey(bodyDto);
     }
 
     //Access Token으로 로그인 연결 끊기
     @PostMapping("remove-by-access-token")
-    public ResponseEntity<ResponseDto<ResponseUserKeyDto>> removeByAccessToken(@RequestHeader RemoveByAccessTokenHeaderDto headerDto) {
-        ResponseDto<ResponseUserKeyDto> result = TLSClientUtil.callTossPostApi("/user/oauth2/remove-by-access-token", null, ResponseDto.class, headerDto);
-        return ResponseEntity.ok(result);
+    public ResponseDto<ResponseUserKeyDto> removeByAccessToken(@RequestHeader RemoveByAccessTokenHeaderDto headerDto) {
+        return loginService.removeByAccessToken(headerDto);
     }
 
     //사용자 정보 받기
     @GetMapping("login-me")
-    public ResponseEntity<ResponseDto<ResponseUserDto>> loginMe(@RequestHeader LoginMeHeaderDto headerDto) {
-        ResponseDto<ResponseUserDto> result = TLSClientUtil.callTossGetApi("/user/oauth2/login-me", ResponseDto.class, headerDto);
-        return ResponseEntity.ok(result);
+    public ResponseDto<ResponseUserDto> loginMe(@RequestHeader LoginMeHeaderDto headerDto) {
+        return loginService.loginMe(headerDto);
     }
 }
