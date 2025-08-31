@@ -33,6 +33,9 @@ jobs:
         run: ./gradlew build
         # 실제 빌드 수행
 
+      - name: Check build artifacts
+        run: ls -lh build/libs
+
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
