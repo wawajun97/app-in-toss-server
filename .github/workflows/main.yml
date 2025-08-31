@@ -41,5 +41,5 @@ jobs:
           key: ${{ secrets.HEYLOCAL_PRIVATEKEY }}
           script: |
             cd /opt/temp
-            scp ./build/libs/heylocal-server-0.0.1-SNAPSHOT.war ubuntu@${{ secrets.EC2_HOST }}:/opt/temp/heylocal.war
+            scp ./build/libs/*.war ubuntu@${{ secrets.EC2_HOST }}:/opt/temp/heylocal.war
             sudo cp /opt/temp/heylocal.war /opt/tomcat10/webapps/heylocal.war
