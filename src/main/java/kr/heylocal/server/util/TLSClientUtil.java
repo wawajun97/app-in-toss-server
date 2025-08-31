@@ -126,34 +126,6 @@ public class TLSClientUtil {
         }
     }
 
-//    private static Mono<ResponseDto> makeGetRequest(String uri, Map<String,String> params, Map<String,String> headers) {
-//        return webClient.get()
-//                .uri(uriBuilder -> {
-//                    // uriBuilder를 사용하여 Map에 있는 모든 파라미터를 쿼리 파라미터로 추가
-//                    uriBuilder.path(uri);
-//                    params.forEach(uriBuilder::queryParam);
-//                    return uriBuilder.build();
-//                })
-//                .headers(httpHeaders -> {
-//                    // 람다식을 사용해 Map에 있는 모든 헤더를 HttpHeaders에 추가
-//                    headers.forEach(httpHeaders::add);
-//                })
-//                .retrieve()
-//                .bodyToMono(ResponseDto.class);
-//    }
-//
-//    private static Mono<ResponseDto> makePostRequest(String uri, Map<String,String> body, Map<String,String> headers) {
-//        return webClient.post()
-//                .uri(uri)
-//                .headers(httpHeaders -> {
-//                    // 람다식을 사용해 Map에 있는 모든 헤더를 HttpHeaders에 추가
-//                    headers.forEach(httpHeaders::add);
-//                })
-//                .bodyValue(body)
-//                .retrieve()
-//                .bodyToMono(ResponseDto.class);
-//    }
-
     public static <T, U extends HeaderDto> T makeGetRequest(String uri, Class<T> responseDtoClass, U headerDto) {
         if(null == headerDto) {
             return webClient.method(HttpMethod.GET)
