@@ -43,11 +43,8 @@ jobs:
           username: ${{ secrets.HEYLOCAL_USERNAME }}
           key: ${{ secrets.HEYLOCAL_PRIVATEKEY }}
           port: 22
-          source: build/libs/heylocal-server-0.0.1-SNAPSHOT.war
+          source: ./build/libs/heylocal-server-0.0.1-SNAPSHOT.war
           target: /opt/temp/heylocal.war
-          overwrite: true
-          rm: true
-
     
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.3
