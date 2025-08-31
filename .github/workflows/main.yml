@@ -7,9 +7,9 @@ on:
 
 jobs:
   build:
-    runs-on: macos-latest # GitHub-hosted Runner
+    runs-on: ubuntu-latest # GitHub-hosted Runner
              # windows-latest
-             # ubuntu-latest
+             # macos-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4 #코드를 runner로 가져옴
@@ -32,3 +32,25 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew build
         # 실제 빌드 수행
+        
+      - name: Change filename
+        run: mv ./build/libs/heylocal-server-0.0.1-SNAPSHOT.war ./heylocal.war
+        
+      - name: Copy WAR to EC2
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.HEYLOCAL_HOST }}
+          username: ${{ secrets.HEYLOCAL_USERNAME }}
+          key: ${{ secrets.HEYLOCAL_PRIVATEKEY }}
+          port: 22
+          source: heylocal.war
+          target: /opt/temp/
+    
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HEYLOCAL_HOST }}
+          username: ${{ secrets.HEYLOCAL_USERNAME }}
+          key: ${{ secrets.HEYLOCAL_PRIVATEKEY }}
+          script: |
+            sudo cp /opt/temp/heylocal.war /opt/tomcat10/webapps/heylocal.war
