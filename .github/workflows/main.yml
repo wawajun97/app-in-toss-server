@@ -37,15 +37,14 @@ jobs:
         run: ls -lh build/libs
 
       - name: Copy WAR to EC2
-        uses: appleboy/scp-action@v0.1.7
+        uses: appleboy/scp-action@v1
         with:
           host: ${{ secrets.HEYLOCAL_HOST }}
           username: ${{ secrets.HEYLOCAL_USERNAME }}
           key: ${{ secrets.HEYLOCAL_PRIVATEKEY }}
           port: 22
-          source: heylocal-server-0.0.1-SNAPSHOT.war
+          source: ./build/libs/heylocal-server-0.0.1-SNAPSHOT.war
           target: /opt/temp/heylocal.war
-          working-directory: build/libs/
     
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.3
