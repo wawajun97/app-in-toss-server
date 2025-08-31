@@ -45,4 +45,5 @@ jobs:
           source: ./build/libs/heylocal-server-0.0.1-SNAPSHOT.war
           target: /opt/temp/heylocal.war
           script: |
-            sudo cp /opt/temp/heylocal.war /opt/tomcat10/webapps/heylocal.war
+            ls -lh /opt/temp
+            # sudo cp /opt/temp/heylocal.war /opt/tomcat10/webapps/heylocal.war
