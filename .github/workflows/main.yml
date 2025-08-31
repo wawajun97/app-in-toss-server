@@ -7,9 +7,9 @@ on:
 
 jobs:
   build:
-    runs-on: macos-latest # GitHub-hosted Runner
+    runs-on: ubuntu-latest # GitHub-hosted Runner
              # windows-latest
-             # ubuntu-latest
+             # macos-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4 #코드를 runner로 가져옴
