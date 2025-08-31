@@ -53,5 +53,4 @@ jobs:
           username: ${{ secrets.HEYLOCAL_USERNAME }}
           key: ${{ secrets.HEYLOCAL_PRIVATEKEY }}
           script: |
-            ls -lh /opt/temp
-            # sudo cp /opt/temp/heylocal.war /opt/tomcat10/webapps/heylocal.war
+            sudo cp /opt/temp/heylocal.war /opt/tomcat10/webapps/heylocal.war
