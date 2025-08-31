@@ -32,3 +32,16 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew build
         # 실제 빌드 수행
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_PRIVATE_KEY }}
+          script: |
+            cd /home/ubuntu/app
+            pkill -f 'java -jar' || true
+            rm -f app.jar
+            scp ./build/libs/myapp.jar ubuntu@${{ secrets.EC2_HOST }}:/home/ubuntu/app/app.jar
+            nohup java -jar app.jar > app.log 2>&1 &
