@@ -30,8 +30,8 @@ import java.util.Base64;
 
 @Slf4j
 public class TLSClientUtil {
-    private static final String CERT_PATH = "/Users/junseo/Downloads/mTLS_인증서_20250817/heylocal-key_public.crt";
-    private static final String KEY_PATH = "/Users/junseo/Downloads/mTLS_인증서_20250817/heylocal-key_private.key";
+    private static final String CERT_PATH = "/home/keyfile/mTLS_인증서_20250817/heylocal-key_public.crt";
+    private static final String KEY_PATH = "/home/keyfile/mTLS_인증서_20250817/heylocal-key_private.key";
 
     private static final String BASE_URL = "https://apps-in-toss-api.toss.im/api-partner/v1/apps-in-toss";
 
