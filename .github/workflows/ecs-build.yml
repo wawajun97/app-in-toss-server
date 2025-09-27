@@ -41,7 +41,7 @@ jobs:
         run: |
           echo "Registry: ${{ steps.login-ecr.outputs.registry }}"
           echo "Repository: ${{ secrets.HEYLOCAL_REPOSITORY }}"
-          echo "Region: ${{ secrets.AWS_REGION }}
+          echo "Region: ${{ secrets.AWS_REGION }}"
 
         
       # 5. Docker 이미지 빌드 & 푸시
