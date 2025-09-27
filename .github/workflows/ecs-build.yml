@@ -20,11 +20,6 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
-
-      - name: Debug ECR info
-        run: |
-          echo "Registry: ${{ secrets.ADMIN_ACCESS_KEY_ID }}"
-          echo "Repository: ${{ secrets.ADMIN_SECRET_ACCESS_KEY }}"
     
       # 3. AWS 인증
       - name: Configure AWS credentials
