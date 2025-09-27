@@ -33,9 +33,6 @@ jobs:
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Build with Gradle
-        run: ./gradlew build
         
       # 5. Docker 이미지 빌드 & 푸시
       - name: Build and push Docker image
@@ -44,5 +41,4 @@ jobs:
           context: .                          # Dockerfile 위치
           file: ./Dockerfile                   # Dockerfile 경로
           push: true                           # ECR에 푸시
-          tags: ${{ steps.login-ecr.outputs.registry }}/${{ secrets.HEYLOCAL_REPOSITORY }}:${{ github.sha }}
-
+          tags: ${{ steps.login-ecr.outputs.registry }}/${{ secrets.HEYLOCAL_REPOSITORY }}:latest
