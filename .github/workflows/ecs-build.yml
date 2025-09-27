@@ -34,17 +34,16 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
+      - name: Set up Docker BuildX
+        uses: docker/setup-buildx-action@v3
+        
       # 5. Docker 이미지 빌드 & 푸시
-      - name: Build, tag, and push docker image
-        run: |
-          IMAGE_REPO_NAME=${{ secrets.HEYLOCAL_REPOSITORY }}
-          IMAGE_TAG=${{ github.sha }}   # 커밋 해시 기반 태그
-          ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}
+      # 6. Docker 이미지 빌드 & ECR 푸시
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .                          # Dockerfile 위치
+          file: ./Dockerfile                   # Dockerfile 경로
+          push: true                           # ECR에 푸시
+          tags: ${{ steps.login-ecr.outputs.registry }}/${{ secrets.HEYLOCAL_REPOSITORY }}:latest
 
-          docker build -t $IMAGE_REPO_NAME:$IMAGE_TAG .
-          docker tag $IMAGE_REPO_NAME:$IMAGE_TAG $ECR_REGISTRY/$IMAGE_REPO_NAME:$IMAGE_TAG
-          docker push $ECR_REGISTRY/$IMAGE_REPO_NAME:$IMAGE_TAG
-
-          # latest 태그도 추가 (옵션)
-          docker tag $IMAGE_REPO_NAME:$IMAGE_TAG $ECR_REGISTRY/$IMAGE_REPO_NAME:latest
-          docker push $ECR_REGISTRY/$IMAGE_REPO_NAME:latest
