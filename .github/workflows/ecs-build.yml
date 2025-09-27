@@ -44,5 +44,5 @@ jobs:
           context: .                          # Dockerfile 위치
           file: ./Dockerfile                   # Dockerfile 경로
           push: true                           # ECR에 푸시
-          tags: ${{ steps.login-ecr.outputs.registry }}/${{ secrets.HEYLOCAL_REPOSITORY }}:latest
+          tags: ${{ steps.login-ecr.outputs.registry }}/${{ secrets.HEYLOCAL_REPOSITORY }}:${{ github.sha }}
 
