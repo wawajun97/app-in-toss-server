@@ -48,5 +48,5 @@ jobs:
           context: .                          # Dockerfile 위치
           file: ./Dockerfile                   # Dockerfile 경로
           push: true                           # ECR에 푸시
-          tags: 939966404283.dkr.ecr.ap-southeast-2.amazonaws.com/heylocal:latest
+          tags: ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY }}:latest
           platforms: linux/amd64
