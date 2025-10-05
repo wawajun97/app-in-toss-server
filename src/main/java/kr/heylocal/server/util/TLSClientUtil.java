@@ -2,10 +2,13 @@ package kr.heylocal.server.util;
 
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
+import jakarta.annotation.PostConstruct;
 import kr.heylocal.server.dto.HeaderDto;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
+import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.netty.http.client.HttpClient;
 
@@ -17,8 +20,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.security.KeyFactory;
 import java.security.KeyStore;
 import java.security.PrivateKey;
@@ -29,30 +30,38 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Base64;
 
 @Slf4j
+@Component
 public class TLSClientUtil {
-    private static final String CERT_PATH = "/home/keyfile/mTLS_인증서_20250817/heylocal-key_public.crt";
-    private static final String KEY_PATH = "/home/keyfile/mTLS_인증서_20250817/heylocal-key_private.key";
+    @Value("${heylocal.key}")
+    private String HEYLOCAL_KEY;
 
-    private static final String BASE_URL = "https://apps-in-toss-api.toss.im/api-partner/v1/apps-in-toss";
+    @Value("${heylocal.crt}")
+    private String HEYLOCAL_CRT;
 
-    private static final SslContext context;
-    private static HttpClient httpClient;
+    @Value("${toss.base.url}")
+    private String BASE_URL;
 
-    static {
+    private SslContext sslContext;
+    private HttpClient httpClient;
+    private WebClient webClient;
+
+    @PostConstruct
+    public void init() {
         try {
-            context = createSSLContext(CERT_PATH, KEY_PATH);
+            this.sslContext = createSSLContext();
 
-            httpClient = HttpClient.create()
-                    .secure(ssl -> ssl.sslContext(context));
+            this.httpClient = HttpClient.create()
+                    .secure(ssl -> ssl.sslContext(this.sslContext));
+
+            this.webClient = WebClient.builder()
+                    .clientConnector(new ReactorClientHttpConnector(this.httpClient))
+                    .build();
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("TLSClientUtil initialization failed.", e);
         }
     }
 
-    private static final WebClient webClient = WebClient.builder()
-            .clientConnector(new ReactorClientHttpConnector(httpClient)).build();
-
-    public static <T, U extends HeaderDto> T callTossGetApi(String uri, Class<T> responseDtoClass, U headerDto) {
+    public <T, U extends HeaderDto> T callTossGetApi(String uri, Class<T> responseDtoClass, U headerDto) {
         try {
             return makeGetRequest(BASE_URL + uri, responseDtoClass, headerDto);
         } catch (Exception e) {
@@ -61,7 +70,7 @@ public class TLSClientUtil {
         }
     }
 
-    public static <T, U extends HeaderDto, V> T callTossPostApi(String uri, V bodyDto, Class<T> responseDtoClass, U headerDto) {
+    public <T, U extends HeaderDto, V> T callTossPostApi(String uri, V bodyDto, Class<T> responseDtoClass, U headerDto) {
         try {
             return makePostRequest(BASE_URL + uri, bodyDto, responseDtoClass, headerDto);
         } catch (Exception e) {
@@ -70,9 +79,9 @@ public class TLSClientUtil {
         }
     }
 
-    private static SslContext createSSLContext(String certPath, String keyPath) throws Exception {
-        X509Certificate cert = loadCertificate(certPath);
-        PrivateKey key = loadPrivateKey(keyPath);
+    private SslContext createSSLContext() throws Exception {
+        X509Certificate cert = loadCertificate();
+        PrivateKey key = loadPrivateKey();
 
         KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
         keyStore.load(null, null);
@@ -87,8 +96,8 @@ public class TLSClientUtil {
                 .build();
     }
 
-    private static X509Certificate loadCertificate(String path) throws Exception {
-        String content = Files.readString(Paths.get(path))
+    private X509Certificate loadCertificate() throws Exception {
+        String content = HEYLOCAL_CRT
                 .replace("-----BEGIN CERTIFICATE-----", "")
                 .replace("-----END CERTIFICATE-----", "")
                 .replaceAll("\\s", "");
@@ -97,8 +106,8 @@ public class TLSClientUtil {
                 .generateCertificate(new ByteArrayInputStream(bytes));
     }
 
-    private static PrivateKey loadPrivateKey(String path) throws Exception {
-        String content = Files.readString(Paths.get(path))
+    private PrivateKey loadPrivateKey() throws Exception {
+        String content = HEYLOCAL_KEY
                 .replace("-----BEGIN PRIVATE KEY-----", "")
                 .replace("-----END PRIVATE KEY-----", "")
                 .replaceAll("\\s", "");
@@ -107,7 +116,7 @@ public class TLSClientUtil {
         return KeyFactory.getInstance("RSA").generatePrivate(spec);
     }
 
-    private static String makeRequest(String url, String method, SSLContext context) throws IOException {
+    private String makeRequest(String url, String method, SSLContext context) throws IOException {
         HttpsURLConnection connection = (HttpsURLConnection) new URL(url).openConnection();
         connection.setSSLSocketFactory(context.getSocketFactory());
         connection.setRequestMethod(method);
@@ -126,7 +135,7 @@ public class TLSClientUtil {
         }
     }
 
-    public static <T, U extends HeaderDto> T makeGetRequest(String uri, Class<T> responseDtoClass, U headerDto) {
+    public <T, U extends HeaderDto> T makeGetRequest(String uri, Class<T> responseDtoClass, U headerDto) {
         if(null == headerDto) {
             return webClient.method(HttpMethod.GET)
                     .uri(uri)
@@ -143,7 +152,7 @@ public class TLSClientUtil {
         }
     }
 
-    public static <T, U extends HeaderDto, V> T makePostRequest(String uri, V requestDto, Class<T> responseDtoClass, U headerDto) {
+    public <T, U extends HeaderDto, V> T makePostRequest(String uri, V requestDto, Class<T> responseDtoClass, U headerDto) {
         if(null == headerDto) {
             return webClient.method(HttpMethod.POST)
                     .uri(uri)
