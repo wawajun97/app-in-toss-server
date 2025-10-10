@@ -24,25 +24,16 @@
             "secrets": [
                 {
                     "name": "heylocal.key",
-                    "valueFrom": "arn:aws:secretsmanager:ap-southeast-2:939966404283:secret:heylocal/dev-ENNHvM"
+                    "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:939966404283:secret:heylocal/dev-ENNHvM"
                 },
                 {
                     "name": "heylocal.crt",
-                    "valueFrom": "arn:aws:secretsmanager:ap-southeast-2:939966404283:secret:heylocal/dev-ENNHvM"
+                    "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:939966404283:secret:heylocal/dev-ENNHvM"
                 }
             ],
             "systemControls": [],
             "ulimits": [],
             "volumesFrom": []
-        }
-    ],
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": [
-                "secretsmanager:GetSecretValue"
-            ],
-            "Resource": "arn:aws:secretsmanager:ap-southeast-2:939966404283:secret:heylocal/dev-ENNHvM*"
         }
     ],
     "cpu": "1024",
