@@ -58,7 +58,7 @@ jobs:
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2
         with:
           task-definition: ${{ steps.task_def.outputs.task-definition }}
-          service: ${{ env.ECS_SERVICE }}
+          service: heylocal-service
           cluster: heylocal-dev
           wait-for-service-stability: true
 
