@@ -27,7 +27,6 @@
         }
     ],
     "cpu": "1024",
-    "enableFaultInjection": false,
     "executionRoleArn": "arn:aws:iam::939966404283:role/ecsTaskExecutionRole",
     "family": "heylocal",
     "memory": "3072",
