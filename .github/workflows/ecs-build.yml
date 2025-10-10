@@ -60,5 +60,5 @@ jobs:
           task-definition: ${{ steps.task_def.outputs.task-definition }}
           service: heylocal-service
           cluster: heylocal-dev
-          wait-for-service-stability: true
+          wait-for-service-stability: false
 
