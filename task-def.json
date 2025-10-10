@@ -1,6 +1,5 @@
 {
     "compatibilities": [
-        "EC2",
         "FARGATE"
     ],
     "containerDefinitions": [
