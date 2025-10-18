@@ -23,8 +23,8 @@
             "portMappings": [
                 {
                     "appProtocol": "http",
-                    "containerPort": 80,
-                    "hostPort": 80,
+                    "containerPort": 8080,
+                    "hostPort": 8080,
                     "name": "heylocal-dev",
                     "protocol": "tcp"
                 }
@@ -32,11 +32,11 @@
             "secrets": [
                 {
                     "name": "heylocal.key",
-                    "valueFrom": "arn:aws:secretsmanager:ap-southeast-2:939966404283:secret:heylocal/dev-ENNHvM:heylocal.key::"
+                    "valueFrom": "arn:aws:secretsmanager:ap-southeast-2:939966404283:secret:heylocalSecret-vjAUbS:heylocal.key::"
                 },
                 {
                     "name": "heylocal.crt",
-                    "valueFrom": "arn:aws:secretsmanager:ap-southeast-2:939966404283:secret:heylocal/dev-ENNHvM:heylocal.crt::"
+                    "valueFrom": "arn:aws:secretsmanager:ap-southeast-2:939966404283:secret:heylocalSecret-vjAUbS:heylocal.crt::"
                 }
             ],
             "systemControls": [],
