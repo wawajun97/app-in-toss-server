@@ -1,7 +1,5 @@
 package kr.heylocal.server.util;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import jakarta.annotation.PostConstruct;
@@ -13,10 +11,6 @@ import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.netty.http.client.HttpClient;
-import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient;
-import software.amazon.awssdk.services.secretsmanager.model.GetSecretValueRequest;
-import software.amazon.awssdk.services.secretsmanager.model.GetSecretValueResponse;
 
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.KeyManagerFactory;
@@ -34,17 +28,14 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Base64;
-import java.util.Map;
 
 @Slf4j
 @Component
 public class TLSClientUtil {
-    @Value("${secretmanager}")
-    private String SECRET_MANAGER;
-//    @Value("${heylocal.key}")
+    @Value("${heylocal.key}")
     private String HEYLOCAL_KEY;
 
-//    @Value("${heylocal.crt}")
+    @Value("${heylocal.crt}")
     private String HEYLOCAL_CRT;
 
     @Value("${toss.base.url}")
@@ -57,7 +48,6 @@ public class TLSClientUtil {
     @PostConstruct
     public void init() {
         try {
-            getSecretManager();
             this.sslContext = createSSLContext();
 
             this.httpClient = HttpClient.create()
@@ -178,34 +168,6 @@ public class TLSClientUtil {
                     .retrieve()
                     .bodyToMono(responseDtoClass)
                     .block();
-        }
-    }
-
-    private void getSecretManager() throws JsonProcessingException {
-        String secretName = "heylocal/dev";
-        Region region = Region.of("ap-southeast-2");
-
-        // Create a Secrets Manager client
-        SecretsManagerClient client = SecretsManagerClient.builder()
-                .region(region)
-                .build();
-
-        GetSecretValueRequest getSecretValueRequest = GetSecretValueRequest.builder()
-                .secretId(secretName)
-                .build();
-
-        GetSecretValueResponse getSecretValueResponse;
-
-        try {
-            getSecretValueResponse = client.getSecretValue(getSecretValueRequest);
-            ObjectMapper objectMapper = new ObjectMapper();
-            Map<String,String> map = objectMapper.readValue(SECRET_MANAGER, Map.class);
-            HEYLOCAL_KEY = map.get("heylocal.key");
-            HEYLOCAL_CRT = map.get("heylocal.crt");
-        } catch (Exception e) {
-            // For a list of exceptions thrown, see
-            // https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
-            throw e;
         }
     }
 }

@@ -22,8 +22,12 @@
             ],
             "secrets": [
                 {
-                    "name": "secretmanager",
-                    "valueFrom": "arn:aws:secretsmanager:ap-southeast-2:939966404283:secret:heylocal/dev-ENNHvM"
+                    "name": "heylocal.key",
+                    "valueFrom": "arn:aws:secretsmanager:ap-southeast-2:939966404283:secret:heylocal/dev-ENNHvM:heylocal.key::"
+                },
+                {
+                    "name": "heylocal.crt",
+                    "valueFrom": "arn:aws:secretsmanager:ap-southeast-2:939966404283:secret:heylocal/dev-ENNHvM:heylocal.crt::"
                 }
             ],
             "systemControls": [],
