@@ -39,6 +39,8 @@ import java.util.Map;
 @Slf4j
 @Component
 public class TLSClientUtil {
+    @Value("${secretmanager}")
+    private String SECRET_MANAGER;
 //    @Value("${heylocal.key}")
     private String HEYLOCAL_KEY;
 
@@ -197,7 +199,7 @@ public class TLSClientUtil {
         try {
             getSecretValueResponse = client.getSecretValue(getSecretValueRequest);
             ObjectMapper objectMapper = new ObjectMapper();
-            Map<String,String> map = objectMapper.readValue(getSecretValueResponse.secretString(), Map.class);
+            Map<String,String> map = objectMapper.readValue(SECRET_MANAGER, Map.class);
             HEYLOCAL_KEY = map.get("heylocal.key");
             HEYLOCAL_CRT = map.get("heylocal.crt");
         } catch (Exception e) {
