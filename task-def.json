@@ -9,6 +9,15 @@
             "environmentFiles": [],
             "essential": true,
             "image": "939966404283.dkr.ecr.ap-southeast-2.amazonaws.com/heylocal:latest",
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/ecs/heylocal",
+                    "awslogs-region": "ap-southeast-2",
+                    "awslogs-stream-prefix": "ecs",
+                    "awslogs-create-group": "true"
+                }
+            },
             "mountPoints": [],
             "name": "heylocal",
             "portMappings": [
