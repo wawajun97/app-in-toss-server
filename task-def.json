@@ -29,16 +29,6 @@
                     "protocol": "tcp"
                 }
             ],
-            "secrets": [
-                {
-                    "name": "heylocal.key",
-                    "valueFrom": "arn:aws:secretsmanager:ap-southeast-2:939966404283:secret:heylocal/dev:heylocal.key::"
-                },
-                {
-                    "name": "heylocal.crt",
-                    "valueFrom": "arn:aws:secretsmanager:ap-southeast-2:939966404283:secret:heylocal/dev:heylocal.crt::"
-                }
-            ],
             "systemControls": [],
             "ulimits": [],
             "volumesFrom": []
