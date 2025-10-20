@@ -6,7 +6,6 @@ import kr.heylocal.server.dto.login.*;
 import kr.heylocal.server.util.TLSClientUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -33,14 +32,14 @@ public class LoginService {
     }
 
     //Access Token으로 로그인 연결 끊기
-    public ResponseDto<ResponseUserKeyDto> removeByAccessToken(HttpHeaders headerDto) {
-        ResponseDto<ResponseUserKeyDto> result = tlsClientUtil.callTossPostApi(AppInTossEndPoint.REMOVE_BY_ACCESS_TOKEN.getPath(), null, ResponseDto.class, headerDto);
+    public ResponseDto<ResponseUserKeyDto> removeByAccessToken(String authorization) {
+        ResponseDto<ResponseUserKeyDto> result = tlsClientUtil.callTossPostApi(AppInTossEndPoint.REMOVE_BY_ACCESS_TOKEN.getPath(), null, ResponseDto.class, authorization);
         return result;
     }
 
     //사용자 정보 받기
-    public ResponseDto<ResponseUserDto> loginMe(HttpHeaders headerDto) {
-        ResponseDto<ResponseUserDto> result = tlsClientUtil.callTossGetApi(AppInTossEndPoint.LOGIN_ME.getPath(), ResponseDto.class, headerDto);
+    public ResponseDto<ResponseUserDto> loginMe(String authorization) {
+        ResponseDto<ResponseUserDto> result = tlsClientUtil.callTossGetApi(AppInTossEndPoint.LOGIN_ME.getPath(), ResponseDto.class, authorization);
         return result;
     }
 }
