@@ -28,8 +28,8 @@ import java.util.function.Consumer;
 @Component
 @Slf4j
 public class TLSClientUtil {
-    private final String CERT_PATH = "/home/keyfile/mTLS_인증서_20250817/heylocal-key_public.crt";
-    private final String KEY_PATH = "/home/keyfile/mTLS_인증서_20250817/heylocal-key_private.key";
+    private final String CERT_PATH = "/opt/keyfile/mTLS_인증서_20250817/heylocal-key_public.crt";
+    private final String KEY_PATH = "/opt/keyfile/mTLS_인증서_20250817/heylocal-key_private.key";
 
     private final String BASE_URL = "https://apps-in-toss-api.toss.im/api-partner/v1/apps-in-toss";
 
