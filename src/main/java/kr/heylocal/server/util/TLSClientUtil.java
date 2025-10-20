@@ -56,18 +56,18 @@ public class TLSClientUtil {
         }
     }
 
-    public <T> T callTossGetApi(String uri, Class<T> responseDtoClass, HttpHeaders headerDto) {
+    public <T> T callTossGetApi(String uri, Class<T> responseDtoClass, String authorization) {
         try {
-            return makeGetRequest(BASE_URL + uri, responseDtoClass, headerDto);
+            return makeGetRequest(BASE_URL + uri, responseDtoClass, authorization);
         } catch (Exception e) {
             log.error("error : {}",e.getMessage());
             return null;
         }
     }
 
-    public <T, V> T callTossPostApi(String uri, V bodyDto, Class<T> responseDtoClass, HttpHeaders headerDto) {
+    public <T, V> T callTossPostApi(String uri, V bodyDto, Class<T> responseDtoClass, String authorization) {
         try {
-            return makePostRequest(BASE_URL + uri, bodyDto, responseDtoClass, headerDto);
+            return makePostRequest(BASE_URL + uri, bodyDto, responseDtoClass, authorization);
         } catch (Exception e) {
             log.error("error : {}",e.getMessage());
             return null;
@@ -111,28 +111,25 @@ public class TLSClientUtil {
         return KeyFactory.getInstance("RSA").generatePrivate(spec);
     }
 
-    public <T> T makeGetRequest(
-            String uri,
-            Class<T> responseDtoClass,
-            HttpHeaders headerDto
-    ) {
-        WebClient.RequestHeadersUriSpec<?> spec = (WebClient.RequestHeadersUriSpec<?>) webClient.method(HttpMethod.GET)
+    public <T> T makeGetRequest(String uri, Class<T> responseDtoClass, String authorization) {
+        WebClient.RequestBodySpec requestSpec = webClient.method(HttpMethod.GET)
                 .uri(uri);
 
-        if (headerDto != null) {
-            spec.headers(getConsumerHeader(headerDto));
+        if (authorization != null) {
+            requestSpec = requestSpec.header("Authorization", authorization);
         }
 
-        return spec.retrieve()
-                .bodyToMono(responseDtoClass).block();
+        return requestSpec.retrieve()
+                .bodyToMono(responseDtoClass)
+                .block();
     }
 
-    public <T, V> T makePostRequest(String uri, V requestDto, Class<T> responseDtoClass, HttpHeaders headerDto) {
+    public <T, V> T makePostRequest(String uri, V requestDto, Class<T> responseDtoClass, String authorization) {
         WebClient.RequestBodySpec requestSpec = webClient.method(HttpMethod.POST)
                 .uri(uri);
 
-        if (headerDto != null) {
-            requestSpec = requestSpec.headers(getConsumerHeader(headerDto));
+        if (authorization != null) {
+            requestSpec = requestSpec.header("Authorization", authorization);
         }
 
         if (requestDto != null) {

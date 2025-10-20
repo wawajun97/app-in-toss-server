@@ -5,7 +5,6 @@ import kr.heylocal.server.dto.login.*;
 import kr.heylocal.server.service.LoginService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -33,13 +32,13 @@ public class LoginController {
 
     //Access Token으로 로그인 연결 끊기
     @PostMapping("remove-by-access-token")
-    public ResponseDto<ResponseUserKeyDto> removeByAccessToken(@RequestHeader HttpHeaders headerDto) {
-        return loginService.removeByAccessToken(headerDto);
+    public ResponseDto<ResponseUserKeyDto> removeByAccessToken(@RequestHeader("Authorization") String authorization) {
+        return loginService.removeByAccessToken(authorization);
     }
 
     //사용자 정보 받기
     @GetMapping("login-me")
-    public ResponseDto<ResponseUserDto> loginMe(@RequestHeader HttpHeaders headerDto) {
-        return loginService.loginMe(headerDto);
+    public ResponseDto<ResponseUserDto> loginMe(@RequestHeader("Authorization") String authorization) {
+        return loginService.loginMe(authorization);
     }
 }
