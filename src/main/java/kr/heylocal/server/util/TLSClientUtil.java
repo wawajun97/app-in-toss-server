@@ -111,21 +111,20 @@ public class TLSClientUtil {
         return KeyFactory.getInstance("RSA").generatePrivate(spec);
     }
 
-    public <T> T makeGetRequest(String uri, Class<T> responseDtoClass, HttpHeaders headerDto) {
-        if(null == headerDto) {
-            return webClient.method(HttpMethod.GET)
-                    .uri(uri)
-                    .retrieve()
-                    .bodyToMono(responseDtoClass)
-                    .block();
-        } else {
-            return webClient.method(HttpMethod.GET)
-                    .uri(uri)
-                    .headers(getConsumerHeader(headerDto))
-                    .retrieve()
-                    .bodyToMono(responseDtoClass)
-                    .block();
+    public <T> T makeGetRequest(
+            String uri,
+            Class<T> responseDtoClass,
+            HttpHeaders headerDto
+    ) {
+        WebClient.RequestHeadersUriSpec<?> spec = (WebClient.RequestHeadersUriSpec<?>) webClient.method(HttpMethod.GET)
+                .uri(uri);
+
+        if (headerDto != null) {
+            spec.headers(getConsumerHeader(headerDto));
         }
+
+        return spec.retrieve()
+                .bodyToMono(responseDtoClass).block();
     }
 
     public <T, V> T makePostRequest(String uri, V requestDto, Class<T> responseDtoClass, HttpHeaders headerDto) {
