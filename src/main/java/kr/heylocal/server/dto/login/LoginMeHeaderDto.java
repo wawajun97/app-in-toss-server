@@ -6,11 +6,11 @@ import org.springframework.http.HttpHeaders;
 import java.util.function.Consumer;
 
 public class LoginMeHeaderDto implements HeaderDto {
-    private String authorization;
+    private String Authorization;
     @Override
     public Consumer<HttpHeaders> toHeader() {
         return httpHeaders -> {
-            httpHeaders.add("authorization", this.authorization);
+            httpHeaders.add("Authorization", this.Authorization);
         };
     }
 }

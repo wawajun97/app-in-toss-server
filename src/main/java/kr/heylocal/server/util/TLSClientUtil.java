@@ -2,21 +2,17 @@ package kr.heylocal.server.util;
 
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
-import kr.heylocal.server.dto.HeaderDto;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
+import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.netty.http.client.HttpClient;
 
-import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.KeyFactory;
@@ -27,32 +23,37 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Base64;
+import java.util.function.Consumer;
 
+@Component
 @Slf4j
 public class TLSClientUtil {
-    private static final String CERT_PATH = "/home/keyfile/mTLS_인증서_20250817/heylocal-key_public.crt";
-    private static final String KEY_PATH = "/home/keyfile/mTLS_인증서_20250817/heylocal-key_private.key";
+    private final String CERT_PATH = "/home/keyfile/mTLS_인증서_20250817/heylocal-key_public.crt";
+    private final String KEY_PATH = "/home/keyfile/mTLS_인증서_20250817/heylocal-key_private.key";
 
-    private static final String BASE_URL = "https://apps-in-toss-api.toss.im/api-partner/v1/apps-in-toss";
+    private final String BASE_URL = "https://apps-in-toss-api.toss.im/api-partner/v1/apps-in-toss";
 
-    private static final SslContext context;
-    private static HttpClient httpClient;
+    private SslContext sslContext;
+    private HttpClient httpClient;
+    private WebClient webClient;
 
-    static {
+    @PostConstruct
+    public void init() {
         try {
-            context = createSSLContext(CERT_PATH, KEY_PATH);
+            this.sslContext = createSSLContext(CERT_PATH, KEY_PATH);
 
-            httpClient = HttpClient.create()
-                    .secure(ssl -> ssl.sslContext(context));
+            this.httpClient = HttpClient.create()
+                    .secure(ssl -> ssl.sslContext(this.sslContext));
+
+            this.webClient = WebClient.builder()
+                    .clientConnector(new ReactorClientHttpConnector(this.httpClient))
+                    .build();
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("TLSClientUtil initialization failed.", e);
         }
     }
 
-    private static final WebClient webClient = WebClient.builder()
-            .clientConnector(new ReactorClientHttpConnector(httpClient)).build();
-
-    public static <T, U extends HeaderDto> T callTossGetApi(String uri, Class<T> responseDtoClass, U headerDto) {
+    public <T> T callTossGetApi(String uri, Class<T> responseDtoClass, HttpHeaders headerDto) {
         try {
             return makeGetRequest(BASE_URL + uri, responseDtoClass, headerDto);
         } catch (Exception e) {
@@ -61,7 +62,7 @@ public class TLSClientUtil {
         }
     }
 
-    public static <T, U extends HeaderDto, V> T callTossPostApi(String uri, V bodyDto, Class<T> responseDtoClass, U headerDto) {
+    public <T, V> T callTossPostApi(String uri, V bodyDto, Class<T> responseDtoClass, HttpHeaders headerDto) {
         try {
             return makePostRequest(BASE_URL + uri, bodyDto, responseDtoClass, headerDto);
         } catch (Exception e) {
@@ -70,7 +71,7 @@ public class TLSClientUtil {
         }
     }
 
-    private static SslContext createSSLContext(String certPath, String keyPath) throws Exception {
+    private SslContext createSSLContext(String certPath, String keyPath) throws Exception {
         X509Certificate cert = loadCertificate(certPath);
         PrivateKey key = loadPrivateKey(keyPath);
 
@@ -87,7 +88,7 @@ public class TLSClientUtil {
                 .build();
     }
 
-    private static X509Certificate loadCertificate(String path) throws Exception {
+    private X509Certificate loadCertificate(String path) throws Exception {
         String content = Files.readString(Paths.get(path))
                 .replace("-----BEGIN CERTIFICATE-----", "")
                 .replace("-----END CERTIFICATE-----", "")
@@ -97,7 +98,7 @@ public class TLSClientUtil {
                 .generateCertificate(new ByteArrayInputStream(bytes));
     }
 
-    private static PrivateKey loadPrivateKey(String path) throws Exception {
+    private PrivateKey loadPrivateKey(String path) throws Exception {
         String content = Files.readString(Paths.get(path))
                 .replace("-----BEGIN PRIVATE KEY-----", "")
                 .replace("-----END PRIVATE KEY-----", "")
@@ -107,26 +108,7 @@ public class TLSClientUtil {
         return KeyFactory.getInstance("RSA").generatePrivate(spec);
     }
 
-    private static String makeRequest(String url, String method, SSLContext context) throws IOException {
-        HttpsURLConnection connection = (HttpsURLConnection) new URL(url).openConnection();
-        connection.setSSLSocketFactory(context.getSocketFactory());
-        connection.setRequestMethod(method);
-        connection.setConnectTimeout(5000);
-        connection.setReadTimeout(5000);
-
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
-            StringBuilder response = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                response.append(line);
-            }
-            return response.toString();
-        } finally {
-            connection.disconnect();
-        }
-    }
-
-    public static <T, U extends HeaderDto> T makeGetRequest(String uri, Class<T> responseDtoClass, U headerDto) {
+    public <T> T makeGetRequest(String uri, Class<T> responseDtoClass, HttpHeaders headerDto) {
         if(null == headerDto) {
             return webClient.method(HttpMethod.GET)
                     .uri(uri)
@@ -136,30 +118,32 @@ public class TLSClientUtil {
         } else {
             return webClient.method(HttpMethod.GET)
                     .uri(uri)
-                    .headers(headerDto.toHeader())
+                    .headers(getConsumerHeader(headerDto))
                     .retrieve()
                     .bodyToMono(responseDtoClass)
                     .block();
         }
     }
 
-    public static <T, U extends HeaderDto, V> T makePostRequest(String uri, V requestDto, Class<T> responseDtoClass, U headerDto) {
-        if(null == headerDto) {
-            return webClient.method(HttpMethod.POST)
-                    .uri(uri)
-                    .bodyValue(requestDto)
-                    .retrieve()
-                    .bodyToMono(responseDtoClass)
-                    .block();
-        } else {
-            return webClient.method(HttpMethod.POST)
-                    .uri(uri)
-                    .headers(headerDto.toHeader())
-                    .bodyValue(requestDto)
-                    .retrieve()
-                    .bodyToMono(responseDtoClass)
-                    .block();
+    public <T, V> T makePostRequest(String uri, V requestDto, Class<T> responseDtoClass, HttpHeaders headerDto) {
+        WebClient.RequestBodySpec requestSpec = webClient.method(HttpMethod.POST)
+                .uri(uri);
+
+        if (headerDto != null) {
+            requestSpec = requestSpec.headers(getConsumerHeader(headerDto));
         }
+
+        if (requestDto != null) {
+            requestSpec = (WebClient.RequestBodySpec) requestSpec.bodyValue(requestDto);
+        }
+
+        return requestSpec.retrieve()
+                .bodyToMono(responseDtoClass)
+                .block();
     }
 
+    private Consumer<HttpHeaders> getConsumerHeader(HttpHeaders headers) {
+        Consumer<HttpHeaders> consumer = h -> h.addAll(headers);
+        return consumer;
+    }
 }
