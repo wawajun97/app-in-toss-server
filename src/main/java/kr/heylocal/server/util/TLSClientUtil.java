@@ -67,7 +67,6 @@ public class TLSClientUtil {
 
     public <T, V> T callTossPostApi(String uri, V bodyDto, Class<T> responseDtoClass, HttpHeaders headerDto) {
         try {
-            log.info("sadjklf : {}",  makePostRequest(BASE_URL + uri, bodyDto, responseDtoClass, headerDto));
             return makePostRequest(BASE_URL + uri, bodyDto, responseDtoClass, headerDto);
         } catch (Exception e) {
             log.error("error : {}",e.getMessage());
