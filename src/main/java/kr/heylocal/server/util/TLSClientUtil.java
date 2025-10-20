@@ -67,6 +67,7 @@ public class TLSClientUtil {
 
     public <T, V> T callTossPostApi(String uri, V bodyDto, Class<T> responseDtoClass, HttpHeaders headerDto) {
         try {
+            log.info("sadjklf : {}",  makePostRequest(BASE_URL + uri, bodyDto, responseDtoClass, headerDto));
             return makePostRequest(BASE_URL + uri, bodyDto, responseDtoClass, headerDto);
         } catch (Exception e) {
             log.error("error : {}",e.getMessage());
@@ -129,27 +130,25 @@ public class TLSClientUtil {
     }
 
     public <T, V> T makePostRequest(String uri, V requestDto, Class<T> responseDtoClass, HttpHeaders headerDto) {
-        if(null == headerDto) {
-            return webClient.method(HttpMethod.POST)
-                    .uri(uri)
-                    .bodyValue(requestDto)
-                    .retrieve()
-                    .bodyToMono(responseDtoClass)
-                    .block();
-        } else {
-            return webClient.method(HttpMethod.POST)
-                    .uri(uri)
-                    .headers(getConsumerHeader(headerDto))
-                    .bodyValue(requestDto)
-                    .retrieve()
-                    .bodyToMono(responseDtoClass)
-                    .block();
+        WebClient.RequestBodySpec requestSpec = webClient.method(HttpMethod.POST)
+                .uri(uri);
+
+        if (headerDto != null) {
+            requestSpec = requestSpec.headers(getConsumerHeader(headerDto));
         }
+
+        if (requestDto != null) {
+            requestSpec = (WebClient.RequestBodySpec) requestSpec.bodyValue(requestDto);
+        }
+
+        return requestSpec.retrieve()
+                .bodyToMono(responseDtoClass)
+                .block();
     }
 
 
     private Consumer<HttpHeaders> getConsumerHeader(HttpHeaders headers) {
-        Consumer<HttpHeaders> consumer = h -> h.addAll(headers);
+        Consumer<HttpHeaders> consumer = h -> { h.addAll(headers); };
         return consumer;
     }
 }
