@@ -8,12 +8,12 @@ import java.util.function.Consumer;
 
 @Data
 public class RemoveByAccessTokenHeaderDto implements HeaderDto {
-    private String authorization;
+    private String Authorization;
 
     @Override
     public Consumer<HttpHeaders> toHeader() {
         return httpHeaders -> {
-            httpHeaders.add("authorization", this.authorization);
+            httpHeaders.add("Authorization", this.Authorization);
         };
     }
 }

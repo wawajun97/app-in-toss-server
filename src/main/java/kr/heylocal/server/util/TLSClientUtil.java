@@ -3,23 +3,17 @@ package kr.heylocal.server.util;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import jakarta.annotation.PostConstruct;
-import kr.heylocal.server.dto.HeaderDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.netty.http.client.HttpClient;
 
-import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.URL;
 import java.security.KeyFactory;
 import java.security.KeyStore;
 import java.security.PrivateKey;
@@ -28,6 +22,7 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Base64;
+import java.util.function.Consumer;
 
 @Slf4j
 @Component
@@ -61,7 +56,7 @@ public class TLSClientUtil {
         }
     }
 
-    public <T, U extends HeaderDto> T callTossGetApi(String uri, Class<T> responseDtoClass, U headerDto) {
+    public <T> T callTossGetApi(String uri, Class<T> responseDtoClass, HttpHeaders headerDto) {
         try {
             return makeGetRequest(BASE_URL + uri, responseDtoClass, headerDto);
         } catch (Exception e) {
@@ -70,7 +65,7 @@ public class TLSClientUtil {
         }
     }
 
-    public <T, U extends HeaderDto, V> T callTossPostApi(String uri, V bodyDto, Class<T> responseDtoClass, U headerDto) {
+    public <T, V> T callTossPostApi(String uri, V bodyDto, Class<T> responseDtoClass, HttpHeaders headerDto) {
         try {
             return makePostRequest(BASE_URL + uri, bodyDto, responseDtoClass, headerDto);
         } catch (Exception e) {
@@ -116,26 +111,7 @@ public class TLSClientUtil {
         return KeyFactory.getInstance("RSA").generatePrivate(spec);
     }
 
-    private String makeRequest(String url, String method, SSLContext context) throws IOException {
-        HttpsURLConnection connection = (HttpsURLConnection) new URL(url).openConnection();
-        connection.setSSLSocketFactory(context.getSocketFactory());
-        connection.setRequestMethod(method);
-        connection.setConnectTimeout(5000);
-        connection.setReadTimeout(5000);
-
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
-            StringBuilder response = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                response.append(line);
-            }
-            return response.toString();
-        } finally {
-            connection.disconnect();
-        }
-    }
-
-    public <T, U extends HeaderDto> T makeGetRequest(String uri, Class<T> responseDtoClass, U headerDto) {
+    public <T> T makeGetRequest(String uri, Class<T> responseDtoClass, HttpHeaders headerDto) {
         if(null == headerDto) {
             return webClient.method(HttpMethod.GET)
                     .uri(uri)
@@ -145,14 +121,14 @@ public class TLSClientUtil {
         } else {
             return webClient.method(HttpMethod.GET)
                     .uri(uri)
-                    .headers(headerDto.toHeader())
+                    .headers(getConsumerHeader(headerDto))
                     .retrieve()
                     .bodyToMono(responseDtoClass)
                     .block();
         }
     }
 
-    public <T, U extends HeaderDto, V> T makePostRequest(String uri, V requestDto, Class<T> responseDtoClass, U headerDto) {
+    public <T, V> T makePostRequest(String uri, V requestDto, Class<T> responseDtoClass, HttpHeaders headerDto) {
         if(null == headerDto) {
             return webClient.method(HttpMethod.POST)
                     .uri(uri)
@@ -163,11 +139,17 @@ public class TLSClientUtil {
         } else {
             return webClient.method(HttpMethod.POST)
                     .uri(uri)
-                    .headers(headerDto.toHeader())
+                    .headers(getConsumerHeader(headerDto))
                     .bodyValue(requestDto)
                     .retrieve()
                     .bodyToMono(responseDtoClass)
                     .block();
         }
+    }
+
+
+    private Consumer<HttpHeaders> getConsumerHeader(HttpHeaders headers) {
+        Consumer<HttpHeaders> consumer = h -> h.addAll(headers);
+        return consumer;
     }
 }
