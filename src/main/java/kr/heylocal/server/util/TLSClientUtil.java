@@ -6,6 +6,7 @@ import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -110,7 +111,8 @@ public class TLSClientUtil {
 
     public <T> T makeGetRequest(String uri, Class<T> responseDtoClass, String authorization) {
         WebClient.RequestBodySpec requestSpec = webClient.method(HttpMethod.GET)
-                .uri(uri);
+                .uri(uri)
+                .accept(MediaType.APPLICATION_JSON);
 
         if (authorization != null) {
             requestSpec = requestSpec.header("Authorization", authorization);
@@ -123,7 +125,8 @@ public class TLSClientUtil {
 
     public <T, V> T makePostRequest(String uri, V requestDto, Class<T> responseDtoClass, String authorization) {
         WebClient.RequestBodySpec requestSpec = webClient.method(HttpMethod.POST)
-                .uri(uri);
+                .uri(uri)
+                .accept(MediaType.APPLICATION_JSON);
 
         if (authorization != null) {
             requestSpec = requestSpec.header("Authorization", authorization);
