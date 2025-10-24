@@ -31,8 +31,8 @@ import java.util.Map;
 @Component
 @Slf4j
 public class TLSClientUtil {
-    private final String CERT_PATH = "/opt/keyfile/mTLS_인증서_20250817/heylocal-key_public.crt";
-    private final String KEY_PATH = "/opt/keyfile/mTLS_인증서_20250817/heylocal-key_private.key";
+    private final String CERT_PATH = "src/main/resources/heylocal-key_public.crt";
+    private final String KEY_PATH = "src/main/resources/heylocal-key_private.key";
 
     private final String BASE_URL = "https://apps-in-toss-api.toss.im/api-partner/v1/apps-in-toss";
 
@@ -43,13 +43,6 @@ public class TLSClientUtil {
     @PostConstruct
     public void init() {
         try {
-            Path certPath = Paths.get(CERT_PATH);
-            Path keyPath = Paths.get(KEY_PATH);
-            if (!Files.exists(certPath) || !Files.exists(keyPath)) {
-                log.warn("Private key not found, skipping initialization...");
-                return;
-            }
-
             this.sslContext = createSSLContext(CERT_PATH, KEY_PATH);
 
             this.httpClient = HttpClient.create()
