@@ -141,14 +141,4 @@ public class TLSClientUtil {
                 .bodyToMono(responseDtoClass)
                 .block();
     }
-
-    public Map<String,Object> getCertResponse(String accessToken, CertDto certDto) {
-        return webClient.method(HttpMethod.POST)
-                .uri("https://cert.toss.im/api/v2/sign/user/auth/id/request")
-                .header("Authorization", "Bearer " + accessToken)
-                .bodyValue(certDto)
-                .retrieve()
-                .bodyToMono(Map.class)
-                .block();
-    }
 }

@@ -23,7 +23,6 @@ import java.util.Base64;
 @RequiredArgsConstructor
 public class LoginService {
     private final TLSClientUtil tlsClientUtil;
-    private final FirebaseApp firebaseApp;
     private final FirebaseAuth firebaseAuth;
     //Access Token 재발급 받기
     public ResponseDto<ResponseTokenDto> refreshToken(RefreshTokenBodyDto bodyDto) {
@@ -71,7 +70,7 @@ public class LoginService {
         }
 
         //login-me 호출
-        ResponseDto<ResponseUserDto> loginMeResult = this.loginMe(generateTokenResult.getSuccess().getAccessToken());
+        ResponseDto<ResponseUserDto> loginMeResult = this.loginMe("Bearer " + generateTokenResult.getSuccess().getAccessToken());
 
         //login-me 실패 예외처리
         if(null != loginMeResult && "FAIL".equals(loginMeResult.getResultType())) {
