@@ -36,7 +36,7 @@ jobs:
 
       - name: Set application properties
         run: |
-          echo "base64.encoded.aes.key=${{ secrets.DECRYPTION_KEY }}" >> src/main/resources/application.properties
+          echo -e "\nbase64.encoded.aes.key=${{ secrets.HEYLOCAL_USERINFO_DECRYPT_KEY }}" >> src/main/resources/application.properties
         
       - name: Build with Gradle
         env:
