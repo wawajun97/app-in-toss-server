@@ -119,7 +119,7 @@ public class LoginService {
 
             customToken = this.firebaseAuth.createCustomToken(userRecord.getUid());
         } catch(Exception e) {
-            return getTossAuthResponse(null, "firebase error");
+            return getTossAuthResponse(null, e.getMessage());
         }
 
         return getTossAuthResponse(customToken, null);
