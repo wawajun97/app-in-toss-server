@@ -37,7 +37,7 @@ jobs:
       - name: Build with Gradle
         env:
           DECRYPTION_KEY: ${{ secrets.HEYLOCAL_USERINFO_DECRYPT_KEY }}
-        run: ./gradlew clean build -x test
+        run: ./gradlew clean build -x test -Pbase64.encoded.aes.key=$DECRYPTION_KEY
         # 실제 빌드 수행
         
       - name: Change filename
