@@ -63,8 +63,6 @@ public class LoginService {
         //generate-token 호출
         ResponseDto<ResponseTokenDto> generateTokenResult = this.generateToken(bodyDto);
 
-        log.info("generateTokenResult : {}", generateTokenResult);
-
         //generate-token 실패 예외처리
         if(null != generateTokenResult && "FAIL".equals(generateTokenResult.getResultType())) {
             return getTossAuthResponse(null, generateTokenResult.getError().getReason());
@@ -77,8 +75,6 @@ public class LoginService {
         if(null != loginMeResult && "FAIL".equals(loginMeResult.getResultType())) {
             return getTossAuthResponse(null, loginMeResult.getError().getReason());
         }
-
-        log.info("loginMeResult : {}", loginMeResult);
 
         String decPhone = null;
         String decEmail = null;
@@ -113,20 +109,18 @@ public class LoginService {
 
         String customToken = null;
         try {
-            UserRecord userRecord = this.firebaseAuth.createUser(createRequest);
+            //firebase에 유저가 있는지 검사
+            UserRecord userRecord = firebaseAuth.getUser(loginMeResult.getSuccess().getUserKey());
 
-            log.info("userRecord : {}", userRecord);
-
+            //없으면 유저 생성
             if(null == userRecord) {
-                return getTossAuthResponse(null,"userRecord error");
+                userRecord = firebaseAuth.createUser(createRequest);
             }
 
             customToken = this.firebaseAuth.createCustomToken(userRecord.getUid());
         } catch(Exception e) {
             return getTossAuthResponse(null, "firebase error");
         }
-
-        log.info("customToken : {}", customToken);
 
         return getTossAuthResponse(customToken, null);
     }
