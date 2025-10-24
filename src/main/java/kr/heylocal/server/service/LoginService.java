@@ -2,6 +2,7 @@ package kr.heylocal.server.service;
 
 import com.google.common.base.Strings;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.UserRecord;
 import kr.heylocal.server.common.AppInTossEndPoint;
 import kr.heylocal.server.dto.ResponseDto;
@@ -108,17 +109,24 @@ public class LoginService {
         createRequest.setUid(loginMeResult.getSuccess().getUserKey());
 
         String customToken = null;
+        UserRecord userRecord;
         try {
             //firebase에 유저가 있는지 검사
-            UserRecord userRecord = firebaseAuth.getUser(loginMeResult.getSuccess().getUserKey());
-
-            //없으면 유저 생성
-            if(null == userRecord) {
+            userRecord = firebaseAuth.getUser(loginMeResult.getSuccess().getUserKey());
+        } catch (FirebaseAuthException fe) {
+            try{
+                //유저가 없어서 생성
                 userRecord = firebaseAuth.createUser(createRequest);
+            } catch (Exception e) {
+                return getTossAuthResponse(null, e.getMessage());
             }
-
-            customToken = this.firebaseAuth.createCustomToken(userRecord.getUid());
         } catch(Exception e) {
+            return getTossAuthResponse(null, e.getMessage());
+        }
+
+        try{
+            customToken = this.firebaseAuth.createCustomToken(userRecord.getUid());
+        } catch (Exception e) {
             return getTossAuthResponse(null, e.getMessage());
         }
 
