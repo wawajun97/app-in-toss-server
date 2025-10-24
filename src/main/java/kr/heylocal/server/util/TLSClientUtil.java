@@ -3,10 +3,14 @@ package kr.heylocal.server.util;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import jakarta.annotation.PostConstruct;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import kr.heylocal.server.dto.CertDto;
 import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.units.qual.K;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
@@ -31,9 +35,8 @@ import java.util.Map;
 @Component
 @Slf4j
 public class TLSClientUtil {
-    private final String CERT_PATH = "src/main/resources/heylocal-key_public.crt";
-    private final String KEY_PATH = "src/main/resources/heylocal-key_private.key";
-
+    private final String KEY_FILE_NAME = "heylocal-key_private.key";
+    private final String CRT_FILE_NAME = "heylocal-key_public.crt";
     private final String BASE_URL = "https://apps-in-toss-api.toss.im/api-partner/v1/apps-in-toss";
 
     private SslContext sslContext;
@@ -43,7 +46,7 @@ public class TLSClientUtil {
     @PostConstruct
     public void init() {
         try {
-            this.sslContext = createSSLContext(CERT_PATH, KEY_PATH);
+            this.sslContext = createSSLContext();
 
             this.httpClient = HttpClient.create()
                     .secure(ssl -> ssl.sslContext(this.sslContext));
@@ -74,9 +77,9 @@ public class TLSClientUtil {
         }
     }
 
-    private SslContext createSSLContext(String certPath, String keyPath) throws Exception {
-        X509Certificate cert = loadCertificate(certPath);
-        PrivateKey key = loadPrivateKey(keyPath);
+    private SslContext createSSLContext() throws Exception {
+        X509Certificate cert = loadCertificate();
+        PrivateKey key = loadPrivateKey();
 
         KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
         keyStore.load(null, null);
@@ -91,8 +94,13 @@ public class TLSClientUtil {
                 .build();
     }
 
-    private X509Certificate loadCertificate(String path) throws Exception {
-        String content = Files.readString(Paths.get(path))
+    private X509Certificate loadCertificate() throws Exception {
+        String crtFile;
+        try (InputStream in = new ClassPathResource(CRT_FILE_NAME).getInputStream()) {
+            crtFile = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+        }
+
+        String content = crtFile
                 .replace("-----BEGIN CERTIFICATE-----", "")
                 .replace("-----END CERTIFICATE-----", "")
                 .replaceAll("\\s", "");
@@ -101,8 +109,13 @@ public class TLSClientUtil {
                 .generateCertificate(new ByteArrayInputStream(bytes));
     }
 
-    private PrivateKey loadPrivateKey(String path) throws Exception {
-        String content = Files.readString(Paths.get(path))
+    private PrivateKey loadPrivateKey() throws Exception {
+        String keyFile;
+        try (InputStream in = new ClassPathResource(KEY_FILE_NAME).getInputStream()) {
+            keyFile = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+        }
+
+        String content = keyFile
                 .replace("-----BEGIN PRIVATE KEY-----", "")
                 .replace("-----END PRIVATE KEY-----", "")
                 .replaceAll("\\s", "");
