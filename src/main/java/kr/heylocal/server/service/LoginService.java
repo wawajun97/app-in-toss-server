@@ -107,7 +107,7 @@ public class LoginService {
 
         //전화번호가 있으면 추가
         if(null != decPhone) {
-            createRequest.setPhoneNumber(decCallingCode + decPhone.replaceFirst("^0", ""));
+            createRequest.setPhoneNumber("+" + decCallingCode + decPhone.replaceFirst("^0", ""));
         }
         createRequest.setUid(loginMeResult.getSuccess().getUserKey());
 
