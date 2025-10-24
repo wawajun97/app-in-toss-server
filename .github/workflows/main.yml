@@ -36,7 +36,7 @@ jobs:
 
       - name: Build with Gradle
         env:
-          base64.encoded.aes.key: ${{ secrets.HEYLOCAL_USERINFO_DECRYPT_KEY }}
+          DECRYPTION_KEY: ${{ secrets.HEYLOCAL_USERINFO_DECRYPT_KEY }}
         run: ./gradlew clean build -x test
         # 실제 빌드 수행
         
