@@ -5,7 +5,7 @@ import io.netty.handler.ssl.SslContextBuilder;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
@@ -23,7 +23,7 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Base64;
-import java.util.function.Consumer;
+import java.util.Map;
 
 @Slf4j
 @Component
@@ -57,7 +57,7 @@ public class TLSClientUtil {
         }
     }
 
-    public <T> T callTossGetApi(String uri, Class<T> responseDtoClass, String authorization) {
+    public <T> T callTossGetApi(String uri, ParameterizedTypeReference<T> responseDtoClass, String authorization) {
         try {
             return makeGetRequest(BASE_URL + uri, responseDtoClass, authorization);
         } catch (Exception e) {
@@ -66,7 +66,7 @@ public class TLSClientUtil {
         }
     }
 
-    public <T, V> T callTossPostApi(String uri, V bodyDto, Class<T> responseDtoClass, String authorization) {
+    public <T, V> T callTossPostApi(String uri, V bodyDto, ParameterizedTypeReference<T> responseDtoClass, String authorization) {
         try {
             return makePostRequest(BASE_URL + uri, bodyDto, responseDtoClass, authorization);
         } catch (Exception e) {
@@ -112,7 +112,7 @@ public class TLSClientUtil {
         return KeyFactory.getInstance("RSA").generatePrivate(spec);
     }
 
-    public <T> T makeGetRequest(String uri, Class<T> responseDtoClass, String authorization) {
+    public <T> T makeGetRequest(String uri, ParameterizedTypeReference<T> responseDtoClass, String authorization) {
         WebClient.RequestBodySpec requestSpec = webClient.method(HttpMethod.GET)
                 .uri(uri)
                 .accept(MediaType.APPLICATION_JSON);
@@ -126,7 +126,7 @@ public class TLSClientUtil {
                 .block();
     }
 
-    public <T, V> T makePostRequest(String uri, V requestDto, Class<T> responseDtoClass, String authorization) {
+    public <T, V> T makePostRequest(String uri, V requestDto, ParameterizedTypeReference<T> responseDtoClass, String authorization) {
         WebClient.RequestBodySpec requestSpec = webClient.method(HttpMethod.POST)
                 .uri(uri)
                 .accept(MediaType.APPLICATION_JSON);
@@ -142,11 +142,5 @@ public class TLSClientUtil {
         return requestSpec.retrieve()
                 .bodyToMono(responseDtoClass)
                 .block();
-    }
-
-
-    private Consumer<HttpHeaders> getConsumerHeader(HttpHeaders headers) {
-        Consumer<HttpHeaders> consumer = h -> { h.addAll(headers); };
-        return consumer;
     }
 }
