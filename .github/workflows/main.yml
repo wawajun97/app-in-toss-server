@@ -34,10 +34,9 @@ jobs:
         run: |
           echo "${{ secrets.MTLS_CRT }}" | base64 --decode > src/main/resources/heylocal-key_public.crt
 
-      - name: Set up environment
-        run: echo "DECRYPTION_KEY=${{ secrets.HEYLOCAL_USERINFO_DECRYPT_KEY }}" >> $GITHUB_ENV
-          
       - name: Build with Gradle
+        env:
+          DECRYPTION_KEY: ${{ secrets.HEYLOCAL_USERINFO_DECRYPT_KEY }}
         run: ./gradlew clean build -x test
         # 실제 빌드 수행
         
