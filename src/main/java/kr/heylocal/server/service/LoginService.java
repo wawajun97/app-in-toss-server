@@ -10,6 +10,7 @@ import kr.heylocal.server.dto.login.*;
 import kr.heylocal.server.util.TLSClientUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +25,9 @@ import java.util.Base64;
 public class LoginService {
     private final TLSClientUtil tlsClientUtil;
     private final FirebaseAuth firebaseAuth;
+    @Value("${base64.encoded.aes.key}")
+    private String base64EncodedAesKey;
+
     //Access Token 재발급 받기
     public ResponseDto<ResponseTokenDto> refreshToken(RefreshTokenBodyDto bodyDto) {
         ResponseDto<ResponseTokenDto> result = tlsClientUtil.callTossPostApi(AppInTossEndPoint.REFRESH_TOKEN.getPath(), bodyDto, new ParameterizedTypeReference<ResponseDto<ResponseTokenDto>>() {}, null);
@@ -148,7 +152,6 @@ public class LoginService {
     }
 
     public String decrypted(String encryptedText) throws Exception {
-        String base64EncodedAesKey = "";
         String aad = "TOSS";
 
         if(null != encryptedText) {
