@@ -24,7 +24,7 @@ jobs:
       - name: Restore firebase-adminsdk.json
         run: |
           mkdir -p src/main/resources
-          echo "${{ secrets.HEYLOCAL_APP_PRIVAET_KEY }}" | base64 --decode > src/main/resources/firebase-adminsdk.json
+          echo "${{ secrets.HEYLOCAL_APP_PRIVAETE_KEY }}" | base64 --decode > src/main/resources/firebase-adminsdk.json
 
       - name: Build with Gradle
         run: ./gradlew clean build -x test
