@@ -108,29 +108,24 @@ public class LoginService {
         }
         createRequest.setUid(loginMeResult.getSuccess().getUserKey());
 
-        String customToken = null;
-        UserRecord userRecord;
         try {
-            //firebase에 유저가 있는지 검사
-            userRecord = firebaseAuth.getUser(loginMeResult.getSuccess().getUserKey());
-        } catch (FirebaseAuthException fe) {
-            try{
-                //유저가 없어서 생성
+            // Firebase에 유저가 있는지 검사 후 없으면 생성
+            UserRecord userRecord;
+            try {
+                userRecord = firebaseAuth.getUser(loginMeResult.getSuccess().getUserKey());
+            } catch (FirebaseAuthException fe) {
                 userRecord = firebaseAuth.createUser(createRequest);
-            } catch (Exception e) {
-                return getTossAuthResponse(null, e.getMessage());
             }
-        } catch(Exception e) {
-            return getTossAuthResponse(null, e.getMessage());
-        }
 
-        try{
-            customToken = this.firebaseAuth.createCustomToken(userRecord.getUid());
+            // Custom Token 생성
+            String customToken = firebaseAuth.createCustomToken(userRecord.getUid());
+
+            // 성공 처리 로직
+            return getTossAuthResponse(customToken, null);
+
         } catch (Exception e) {
             return getTossAuthResponse(null, e.getMessage());
         }
-
-        return getTossAuthResponse(customToken, null);
     }
 
     private ResponseDto<String> getTossAuthResponse(String customToken, String errorMsg) {
