@@ -3,7 +3,6 @@ package kr.heylocal.server.util;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import jakarta.annotation.PostConstruct;
-import java.nio.file.Path;
 import kr.heylocal.server.dto.CertDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;
@@ -43,13 +42,6 @@ public class TLSClientUtil {
     @PostConstruct
     public void init() {
         try {
-            Path certPath = Paths.get(CERT_PATH);
-            Path keyPath = Paths.get(KEY_PATH);
-            if (!Files.exists(certPath) || !Files.exists(keyPath)) {
-                log.warn("Private key not found, skipping initialization...");
-                return;
-            }
-
             this.sslContext = createSSLContext(CERT_PATH, KEY_PATH);
 
             this.httpClient = HttpClient.create()

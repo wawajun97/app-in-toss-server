@@ -21,13 +21,17 @@ jobs:
           java-version: '17'
           distribution: 'temurin' #JDK 설치
 
-      - name: Restore firebase-adminsdk.json
-        run: |
-          mkdir -p src/main/resources
-          echo "${{ secrets.HEYLOCAL_APP_PRIVAET_KEY }}" | base64 --decode > src/main/resources/firebase-adminsdk.json
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+        # 빌드 속도 최적화를 위해 Gradle 캐시 사용
 
       - name: Build with Gradle
-        run: ./gradlew clean build -x test
+        run: ./gradlew build
         # 실제 빌드 수행
         
       - name: Change filename
