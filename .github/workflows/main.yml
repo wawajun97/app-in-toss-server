@@ -26,6 +26,14 @@ jobs:
           mkdir -p src/main/resources
           echo "${{ secrets.HEYLOCAL_APP_PRIVATE_KEY }}" | base64 --decode > src/main/resources/firebase-adminsdk.json
 
+      - name: Restore key file
+        run: |
+          echo "${{ secrets.MTLS_KEY }}" | base64 --decode > src/main/resources/heylocal-key_private.key
+
+      - name: Restore crt file
+        run: |
+          echo "${{ secrets.MTLS_CRT }}" | base64 --decode > src/main/resources/heylocal-key_public.crt
+          
       - name: Build with Gradle
         run: ./gradlew clean build -x test
         # 실제 빌드 수행
