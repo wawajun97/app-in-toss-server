@@ -41,4 +41,10 @@ public class LoginController {
     public ResponseDto<ResponseUserDto> loginMe(@RequestHeader("Authorization") String authorization) {
         return loginService.loginMe(authorization);
     }
+
+    //토스 로그인
+    @PostMapping("toss_auth")
+    public ResponseDto<String> tossAuth(@RequestBody GenerateTokenBodyDto bodyDto) {
+        return loginService.tossAuth(bodyDto);
+    }
 }
