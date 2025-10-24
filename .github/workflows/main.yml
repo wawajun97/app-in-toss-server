@@ -33,6 +33,9 @@ jobs:
       - name: Restore crt file
         run: |
           echo "${{ secrets.MTLS_CRT }}" | base64 --decode > src/main/resources/heylocal-key_public.crt
+
+      - name: Set up environment
+        run: echo "DECRYPT_KEY=${{ secrets.HEYLOCAL_USERINFO_DECRYPT_KEY }}" >> $GITHUB_ENV
           
       - name: Build with Gradle
         run: ./gradlew clean build -x test
