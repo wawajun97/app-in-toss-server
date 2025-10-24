@@ -34,10 +34,14 @@ jobs:
         run: |
           echo "${{ secrets.MTLS_CRT }}" | base64 --decode > src/main/resources/heylocal-key_public.crt
 
+      - name: Set application properties
+        run: |
+          echo "base64.encoded.aes.key=${{ secrets.DECRYPTION_KEY }}" >> src/main/resources/application.properties
+        
       - name: Build with Gradle
         env:
           DECRYPTION_KEY: ${{ secrets.HEYLOCAL_USERINFO_DECRYPT_KEY }}
-        run: ./gradlew clean build -x test -Pbase64.encoded.aes.key=$DECRYPTION_KEY
+        run: ./gradlew clean build -x test
         # 실제 빌드 수행
         
       - name: Change filename
