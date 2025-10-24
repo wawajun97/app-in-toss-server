@@ -1,6 +1,6 @@
 package kr.heylocal.server.service;
 
-import com.google.firebase.FirebaseApp;
+import com.google.common.base.Strings;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.UserRecord;
 import kr.heylocal.server.common.AppInTossEndPoint;
@@ -98,7 +98,7 @@ public class LoginService {
 
         UserRecord.CreateRequest createRequest = new UserRecord.CreateRequest();
         //이메일이 있으면 추가
-        if(null != decEmail) {
+        if(!Strings.isNullOrEmpty(decEmail)) {
             createRequest.setEmail(decEmail);
             createRequest.setEmailVerified(true);
         } else {
@@ -106,7 +106,7 @@ public class LoginService {
         }
 
         //전화번호가 있으면 추가
-        if(null != decPhone) {
+        if(!Strings.isNullOrEmpty(decPhone)) {
             createRequest.setPhoneNumber("+" + decCallingCode + decPhone.replaceFirst("^0", ""));
         }
         createRequest.setUid(loginMeResult.getSuccess().getUserKey());
