@@ -35,6 +35,15 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
+      - name: Restore firebase-adminsdk.json
+        run: |
+          mkdir -p src/main/resources
+          echo "${{ secrets.HEYLOCAL_APP_PRIVATE_KEY }}" | base64 --decode > src/main/resources/firebase-adminsdk.json
+
+      - name: Set application properties
+        run: |
+          echo -e "\nbase64.encoded.aes.key=${{ secrets.HEYLOCAL_USERINFO_DECRYPT_KEY }}" >> src/main/resources/application.properties
+
       - name: Build with Gradle
         run: ./gradlew build
         

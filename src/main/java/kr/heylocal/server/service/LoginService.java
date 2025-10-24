@@ -1,6 +1,6 @@
 package kr.heylocal.server.service;
 
-import com.google.firebase.FirebaseApp;
+import com.google.common.base.Strings;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.UserRecord;
 import kr.heylocal.server.common.AppInTossEndPoint;
@@ -10,6 +10,7 @@ import kr.heylocal.server.dto.login.*;
 import kr.heylocal.server.util.TLSClientUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 
@@ -23,8 +24,9 @@ import java.util.Base64;
 @RequiredArgsConstructor
 public class LoginService {
     private final TLSClientUtil tlsClientUtil;
-    private final FirebaseApp firebaseApp;
     private final FirebaseAuth firebaseAuth;
+    @Value("${base64.encoded.aes.key}")
+    private String base64EncodedAesKey;
     //Access Token 재발급 받기
     public ResponseDto<ResponseTokenDto> refreshToken(RefreshTokenBodyDto bodyDto) {
         ResponseDto<ResponseTokenDto> result = tlsClientUtil.callTossPostApi(AppInTossEndPoint.REFRESH_TOKEN.getPath(), bodyDto, new ParameterizedTypeReference<ResponseDto<ResponseTokenDto>>() {}, null);
@@ -63,8 +65,6 @@ public class LoginService {
         //generate-token 호출
         ResponseDto<ResponseTokenDto> generateTokenResult = this.generateToken(bodyDto);
 
-        log.info("generateTokenResult : {}", generateTokenResult);
-
         //generate-token 실패 예외처리
         if(null != generateTokenResult && "FAIL".equals(generateTokenResult.getResultType())) {
             return getTossAuthResponse(null, generateTokenResult.getError().getReason());
@@ -77,8 +77,6 @@ public class LoginService {
         if(null != loginMeResult && "FAIL".equals(loginMeResult.getResultType())) {
             return getTossAuthResponse(null, loginMeResult.getError().getReason());
         }
-
-        log.info("loginMeResult : {}", loginMeResult);
 
         String decPhone = null;
         String decEmail = null;
@@ -98,7 +96,7 @@ public class LoginService {
 
         UserRecord.CreateRequest createRequest = new UserRecord.CreateRequest();
         //이메일이 있으면 추가
-        if(null != decEmail) {
+        if(!Strings.isNullOrEmpty(decEmail)) {
             createRequest.setEmail(decEmail);
             createRequest.setEmailVerified(true);
         } else {
@@ -106,16 +104,14 @@ public class LoginService {
         }
 
         //전화번호가 있으면 추가
-        if(null != decPhone) {
-            createRequest.setPhoneNumber(decCallingCode + decPhone.replaceFirst("^0", ""));
+        if(!Strings.isNullOrEmpty(decPhone)) {
+            createRequest.setPhoneNumber("+" + decCallingCode + decPhone.replaceFirst("^0", ""));
         }
         createRequest.setUid(loginMeResult.getSuccess().getUserKey());
 
         String customToken = null;
         try {
             UserRecord userRecord = this.firebaseAuth.createUser(createRequest);
-
-            log.info("userRecord : {}", userRecord);
 
             if(null == userRecord) {
                 return getTossAuthResponse(null,"userRecord error");
@@ -125,8 +121,6 @@ public class LoginService {
         } catch(Exception e) {
             return getTossAuthResponse(null, "firebase error");
         }
-
-        log.info("customToken : {}", customToken);
 
         return getTossAuthResponse(customToken, null);
     }
@@ -149,7 +143,6 @@ public class LoginService {
     }
 
     public String decrypted(String encryptedText) throws Exception {
-        String base64EncodedAesKey = "";
         String aad = "TOSS";
 
         if(null != encryptedText) {
