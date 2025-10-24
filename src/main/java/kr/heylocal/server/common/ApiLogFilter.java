@@ -23,18 +23,22 @@ public class ApiLogFilter implements Filter {
 
         filterChain.doFilter(requestWrapper, responseWrapper);
 
-        log.info("===================");
-        log.info("method : {}", requestWrapper.getMethod());
-        log.info("requestUri : {}", requestWrapper.getRequestURI());
-        log.info("content-Type : {}", requestWrapper.getHeader("Content-Type"));
-        log.info("Authorization : {}", requestWrapper.getHeader("Authorization"));
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("\n===================\n");
+        sb.append("method : ").append(requestWrapper.getMethod()).append("\n");
+        sb.append("requestUri : ").append(requestWrapper.getRequestURI()).append("\n");
+        sb.append("content-Type : ").append(requestWrapper.getHeader("Content-Type")).append("\n");
+        sb.append("Authorization : ").append(requestWrapper.getHeader("Authorization")).append("\n");
         requestWrapper.getParameterMap().forEach((key, value) ->
-                log.info("param - key : {} , value : {}", key, value)
+                sb.append("param - key : ").append(key).append(", value : ").append(value).append("\n")
         );
-        log.info("requestBody : {}", getRequestBody(requestWrapper.getContentAsByteArray()));
-        log.info("status : {}", responseWrapper.getStatus());
-        log.info("responseBody : {}", getRequestBody(responseWrapper.getContentAsByteArray()));
-        log.info("===================");
+        sb.append("requestBody : ").append(getRequestBody(requestWrapper.getContentAsByteArray())).append("\n");
+        sb.append("status : ").append(responseWrapper.getStatus()).append("\n");
+        sb.append("responseBody : ").append(getRequestBody(responseWrapper.getContentAsByteArray())).append("\n");
+        sb.append("===================");
+
+        log.info("{}", sb);
 
         // Response body를 클라이언트로 다시 전달
         responseWrapper.copyBodyToResponse();
