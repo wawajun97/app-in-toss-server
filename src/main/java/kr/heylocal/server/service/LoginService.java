@@ -37,9 +37,6 @@ public class LoginService {
     //Access Token 받기
     public ResponseDto<ResponseTokenDto> generateToken(GenerateTokenBodyDto bodyDto) {
         ResponseDto<ResponseTokenDto> result = tlsClientUtil.callTossPostApi(AppInTossEndPoint.GENERATE_TOKEN.getPath(), bodyDto, new ParameterizedTypeReference<ResponseDto<ResponseTokenDto>>() {},null);
-        if(result != null && result.getSuccess() != null) {
-            log.info("geeeee : {}", result.getSuccess().getAccessToken());
-        }
 
         return result;
     }

@@ -43,7 +43,7 @@ public class LoginController {
     }
 
     //토스 로그인
-    @PostMapping("toss_auth")
+    @PostMapping("toss-auth")
     public ResponseDto<String> tossAuth(@RequestBody GenerateTokenBodyDto bodyDto) {
         return loginService.tossAuth(bodyDto);
     }
