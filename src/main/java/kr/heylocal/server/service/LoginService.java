@@ -23,7 +23,7 @@ import java.util.Base64;
 @RequiredArgsConstructor
 public class LoginService {
     private final TLSClientUtil tlsClientUtil;
-    private final FirebaseAuth firebaseAuth;
+//    private final FirebaseAuth firebaseAuth;
     //Access Token 재발급 받기
     public ResponseDto<ResponseTokenDto> refreshToken(RefreshTokenBodyDto bodyDto) {
         ResponseDto<ResponseTokenDto> result = tlsClientUtil.callTossPostApi(AppInTossEndPoint.REFRESH_TOKEN.getPath(), bodyDto, new ParameterizedTypeReference<ResponseDto<ResponseTokenDto>>() {}, null);
@@ -111,21 +111,21 @@ public class LoginService {
         createRequest.setUid(loginMeResult.getSuccess().getUserKey());
 
         String customToken = null;
-        try {
-            UserRecord userRecord = this.firebaseAuth.createUser(createRequest);
-
-            log.info("userRecord : {}", userRecord);
-
-            if(null == userRecord) {
-                return getTossAuthResponse(null,"userRecord error");
-            }
-
-            customToken = this.firebaseAuth.createCustomToken(userRecord.getUid());
-        } catch(Exception e) {
-            return getTossAuthResponse(null, "firebase error");
-        }
-
-        log.info("customToken : {}", customToken);
+//        try {
+//            UserRecord userRecord = this.firebaseAuth.createUser(createRequest);
+//
+//            log.info("userRecord : {}", userRecord);
+//
+//            if(null == userRecord) {
+//                return getTossAuthResponse(null,"userRecord error");
+//            }
+//
+//            customToken = this.firebaseAuth.createCustomToken(userRecord.getUid());
+//        } catch(Exception e) {
+//            return getTossAuthResponse(null, "firebase error");
+//        }
+//
+//        log.info("customToken : {}", customToken);
 
         return getTossAuthResponse(customToken, null);
     }
