@@ -3,6 +3,7 @@ package kr.heylocal.server.util;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -31,6 +32,7 @@ import java.security.cert.X509Certificate;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Base64;
 import java.util.Map;
+import reactor.netty.resources.ConnectionProvider;
 
 @Component
 @Slf4j
@@ -42,11 +44,17 @@ public class TLSClientUtil {
     private SslContext sslContext;
     private HttpClient httpClient;
     private WebClient webClient;
-
+    private ConnectionProvider connectionProvider;
     @PostConstruct
     public void init() {
         try {
             this.sslContext = createSSLContext();
+
+            // ConnectionProvider 생성 및 저장
+            this.connectionProvider = ConnectionProvider.builder("custom")
+                    .maxConnections(100)
+                    .pendingAcquireMaxCount(1000)
+                    .build();
 
             this.httpClient = HttpClient.create()
                     .secure(ssl -> ssl.sslContext(this.sslContext));
@@ -56,6 +64,18 @@ public class TLSClientUtil {
                     .build();
         } catch (Exception e) {
             throw new RuntimeException("TLSClientUtil initialization failed.", e);
+        }
+    }
+
+    @PreDestroy
+    public void cleanup() {
+        try {
+            if (this.connectionProvider != null) {
+                this.connectionProvider.dispose();
+                log.info("ConnectionProvider disposed successfully");
+            }
+        } catch (Exception e) {
+            log.error("Error during cleanup", e);
         }
     }
 
