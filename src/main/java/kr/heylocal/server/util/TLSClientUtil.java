@@ -56,7 +56,7 @@ public class TLSClientUtil {
                     .pendingAcquireMaxCount(1000)
                     .build();
 
-            this.httpClient = HttpClient.create()
+            this.httpClient = HttpClient.create(this.connectionProvider)
                     .secure(ssl -> ssl.sslContext(this.sslContext));
 
             this.webClient = WebClient.builder()
