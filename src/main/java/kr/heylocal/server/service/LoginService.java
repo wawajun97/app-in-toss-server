@@ -4,27 +4,37 @@ import com.google.common.base.Strings;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.UserRecord;
+import com.google.firebase.cloud.FirestoreClient;
 import kr.heylocal.server.common.AppInTossEndPoint;
+import kr.heylocal.server.common.UserType;
 import kr.heylocal.server.dto.ResponseDto;
 import kr.heylocal.server.dto.ResponseErrorDto;
 import kr.heylocal.server.dto.login.*;
+import kr.heylocal.server.util.SupabaseClientUtil;
 import kr.heylocal.server.util.TLSClientUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class LoginService {
     private final TLSClientUtil tlsClientUtil;
+    private final SupabaseClientUtil supabaseClientUtil;
     private final FirebaseAuth firebaseAuth;
     @Value("${base64.encoded.aes.key}")
     private String base64EncodedAesKey;
@@ -126,6 +136,49 @@ public class LoginService {
         } catch (Exception e) {
             return getTossAuthResponse(null, e.getMessage());
         }
+    }
+
+    public ResponseDto<String> logoutByCallback(CallbackLogoutDto dto) {
+        //supabase에서 유저 타입 검색
+        ArrayList<Map<String,String>> user = supabaseClientUtil.callSupabaseApi("/rest/v1/users?id=eq." + dto.getUserKey()+ "&select=user_type",HttpMethod.GET, new HashMap<>(), new ParameterizedTypeReference<ArrayList>() {});
+
+        String userType = UserType.fromName(user.get(0).get("user_type")).toDeleted().getName();
+
+        //파이어베이스 데이터 삭제
+        try {
+            firebaseAuth.deleteUser(dto.getUserKey().toString());
+        } catch (Exception e) {
+            log.error("delete firebase data error : {}", e.getMessage());
+        }
+
+        //supabase 데이터 삭제
+        Map<String,String> body = new HashMap<>();
+        body.put("user_type",userType);
+        body.put("username","탈퇴한 사용자");
+        body.put("image_url",null);
+
+        supabaseClientUtil.callSupabaseApi("/rest/v1/users?id=eq." + dto.getUserKey(), HttpMethod.PATCH, body, new ParameterizedTypeReference<>() {});
+
+        try {
+            //fcm 토큰 제거
+            //Firestore 배지 카운트 초기화
+            //lastUpdated 수정
+            Map<String, Object> updateData = new HashMap<>();
+            updateData.put("fcmTokens", new ArrayList<>());
+            updateData.put("badgeCount", 0);
+            updateData.put("lastUpdated", new Timestamp(System.currentTimeMillis()));
+
+            FirestoreClient.getFirestore()
+                    .collection("users")
+                    .document(dto.getUserKey().toString())
+                    .update(updateData)
+                    .get();
+
+        } catch (InterruptedException | ExecutionException e) {
+            log.error("Firestore 배지 초기화 실패 {}", e.getMessage());
+        }
+
+        return null;
     }
 
     private ResponseDto<String> getTossAuthResponse(String customToken, String errorMsg) {

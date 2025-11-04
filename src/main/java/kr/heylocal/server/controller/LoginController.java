@@ -47,4 +47,10 @@ public class LoginController {
     public ResponseDto<String> tossAuth(@RequestBody GenerateTokenBodyDto bodyDto) {
         return loginService.tossAuth(bodyDto);
     }
+
+    //콜백을 통해 로그인 끊기
+    @PatchMapping("logout")
+    public ResponseDto<String> logoutByCallback(@RequestBody CallbackLogoutDto callbackLogoutDto) {
+        return loginService.logoutByCallback(callbackLogoutDto);
+    }
 }

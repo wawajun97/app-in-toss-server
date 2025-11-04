@@ -34,9 +34,13 @@ jobs:
         run: |
           echo "${{ secrets.MTLS_CRT }}" | base64 --decode > src/main/resources/heylocal-key_public.crt
 
-      - name: Set application properties
+      - name: Set base64 encoding key in application properties
         run: |
           echo -e "\nbase64.encoded.aes.key=${{ secrets.HEYLOCAL_USERINFO_DECRYPT_KEY }}" >> src/main/resources/application.properties
+
+      - name: Set supabase api key in application properties
+        run: |
+          echo -e "\nsupabase.api.key=${{ secrets.SUPABASE_API_KEY }}" >> src/main/resources/application.properties
         
       - name: Build with Gradle
         env:
