@@ -139,30 +139,74 @@ public class LoginService {
     }
 
     public ResponseDto<String> logoutByCallback(CallbackLogoutDto dto) {
-        //supabase에서 유저 타입 검색
-        ArrayList<Map<String,String>> user = supabaseClientUtil.callSupabaseApi("/rest/v1/users?id=eq." + dto.getUserKey()+ "&select=user_type",HttpMethod.GET, new HashMap<>(), new ParameterizedTypeReference<ArrayList>() {});
+        ResponseDto<String> result = new ResponseDto<>();
+        String userKey = dto.getUserKey().toString();
 
-        String userType = UserType.fromName(user.get(0).get("user_type")).toDeleted().getName();
-
-        //파이어베이스 데이터 삭제
         try {
-            firebaseAuth.deleteUser(dto.getUserKey().toString());
+            // 1. 사용자 타입 조회 및 변경
+            String deletedUserType = getDeletedUserType(userKey);
+
+            // 2. Firebase Auth 사용자 삭제
+            deleteFirebaseUser(userKey);
+
+            // 3. Supabase 사용자 데이터 업데이트 (탈퇴 처리)
+            updateSupabaseUserAsDeleted(userKey, deletedUserType);
+
+            // 4. Firestore 데이터 초기화
+            cleanupFirestoreData(userKey);
+
+            result.setResultType("success");
         } catch (Exception e) {
-            log.error("delete firebase data error : {}", e.getMessage());
+            log.error("로그아웃 처리 중 오류 발생 - userId: {}, error: {}", userKey, e.getMessage(), e);
+            result.setResultType("error : " + e.getMessage());
         }
 
-        //supabase 데이터 삭제
-        Map<String,String> body = new HashMap<>();
-        body.put("user_type",userType);
-        body.put("username","탈퇴한 사용자");
-        body.put("image_url",null);
+        return result;
+    }
 
-        supabaseClientUtil.callSupabaseApi("/rest/v1/users?id=eq." + dto.getUserKey(), HttpMethod.PATCH, body, new ParameterizedTypeReference<>() {});
+    private String getDeletedUserType(String userKey) {
+        ArrayList<Map<String, String>> users = supabaseClientUtil.callSupabaseApi(
+                "/rest/v1/users?id=eq." + userKey + "&select=user_type",
+                HttpMethod.GET,
+                new HashMap<>(),
+                new ParameterizedTypeReference<ArrayList>() {}
+        );
 
+        if (users.isEmpty()) {
+            throw new IllegalStateException("사용자를 찾을 수 없습니다: " + userKey);
+        }
+
+        String userType = users.get(0).get("user_type");
+        return UserType.fromName(userType).toDeleted().getName();
+    }
+
+    private void deleteFirebaseUser(String userKey) {
         try {
-            //fcm 토큰 제거
-            //Firestore 배지 카운트 초기화
-            //lastUpdated 수정
+            firebaseAuth.deleteUser(userKey.toString());
+            log.info("Firebase 사용자 삭제 완료 - userId: {}", userKey);
+        } catch (Exception e) {
+            log.error("Firebase 사용자 삭제 실패 - userId: {}, error: {}", userKey, e.getMessage());
+        }
+    }
+
+    private void updateSupabaseUserAsDeleted(String userKey, String deletedUserType) {
+        Map<String, String> body = new HashMap<>();
+        body.put("user_type", deletedUserType);
+        body.put("username", "탈퇴한 사용자");
+        body.put("image_url", null);
+
+        supabaseClientUtil.callSupabaseApi(
+                "/rest/v1/users?id=eq." + userKey,
+                HttpMethod.PATCH,
+                body,
+                new ParameterizedTypeReference<>() {}
+        );
+
+        log.info("Supabase 사용자 데이터 업데이트 완료 - userId: {}", userKey);
+    }
+
+    private void cleanupFirestoreData(String userKey) {
+        try {
             Map<String, Object> updateData = new HashMap<>();
             updateData.put("fcmTokens", new ArrayList<>());
             updateData.put("badgeCount", 0);
@@ -170,15 +214,16 @@ public class LoginService {
 
             FirestoreClient.getFirestore()
                     .collection("users")
-                    .document(dto.getUserKey().toString())
+                    .document(userKey)
                     .update(updateData)
                     .get();
 
+            log.info("Firestore 데이터 초기화 완료 - userId: {}", userKey);
         } catch (InterruptedException | ExecutionException e) {
-            log.error("Firestore 배지 초기화 실패 {}", e.getMessage());
+            log.error("Firestore 데이터 초기화 실패 - userId: {}, error: {}", userKey, e.getMessage());
+            Thread.currentThread().interrupt(); // InterruptedException 발생 시 인터럽트 상태 복원
+            // Firestore 초기화 실패는 치명적이지 않으므로 계속 진행
         }
-
-        return null;
     }
 
     private ResponseDto<String> getTossAuthResponse(String customToken, String errorMsg) {
