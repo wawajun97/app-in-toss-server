@@ -39,6 +39,10 @@ public class LoginService {
     @Value("${base64.encoded.aes.key}")
     private String base64EncodedAesKey;
 
+    private static final String RESULT_TYPE_FAIL = "FAIL";
+    private static final String DECODE_ERROR_MESSAGE = "Failed to decode user information";
+    private static final String BEARER_PREFIX = "Bearer ";
+
     //Access Token 재발급 받기
     public ResponseDto<ResponseTokenDto> refreshToken(RefreshTokenBodyDto bodyDto) {
         ResponseDto<ResponseTokenDto> result = tlsClientUtil.callTossPostApi(AppInTossEndPoint.REFRESH_TOKEN.getPath(), bodyDto, new ParameterizedTypeReference<ResponseDto<ResponseTokenDto>>() {}, null);
@@ -71,71 +75,103 @@ public class LoginService {
     }
 
     public ResponseDto<String> tossAuth(GenerateTokenBodyDto bodyDto) {
-        //generate-token 호출
-        ResponseDto<ResponseTokenDto> generateTokenResult = this.generateToken(bodyDto);
-
-        //generate-token 실패 예외처리
-        if(null != generateTokenResult && "FAIL".equals(generateTokenResult.getResultType())) {
-            return getTossAuthResponse(null, generateTokenResult.getError().getReason());
+        // 1. 토큰 생성
+        ResponseDto<ResponseTokenDto> tokenResponse = generateToken(bodyDto);
+        if (isFailedResponse(tokenResponse)) {
+            return createErrorResponse(tokenResponse.getError().getReason());
         }
 
-        //login-me 호출
-        ResponseDto<ResponseUserDto> loginMeResult = this.loginMe("Bearer " + generateTokenResult.getSuccess().getAccessToken());
-
-        //login-me 실패 예외처리
-        if(null != loginMeResult && "FAIL".equals(loginMeResult.getResultType())) {
-            return getTossAuthResponse(null, loginMeResult.getError().getReason());
+        // 2. 사용자 정보 조회
+        String accessToken = tokenResponse.getSuccess().getAccessToken();
+        ResponseDto<ResponseUserDto> userResponse = loginMe(BEARER_PREFIX + accessToken);
+        if (isFailedResponse(userResponse)) {
+            return createErrorResponse(userResponse.getError().getReason());
         }
 
-        String decPhone = null;
-        String decEmail = null;
-        String decCallingCode = null;
+        // 3. 사용자 정보 복호화
+        DecryptedUserInfoDto decryptedInfo = decryptUserInfo(userResponse.getSuccess());
+        if (decryptedInfo == null) {
+            return createErrorResponse(DECODE_ERROR_MESSAGE);
+        }
 
+        // 4. Firebase 커스텀 토큰 생성
         try {
-            decPhone = decrypted(loginMeResult.getSuccess().getPhone());
-            decEmail = decrypted(loginMeResult.getSuccess().getEmail());
-            decCallingCode = decrypted(loginMeResult.getSuccess().getCallingCode());
+            String customToken = createFirebaseCustomToken(
+                    userResponse.getSuccess().getUserKey(),
+                    decryptedInfo
+            );
+            return createSuccessResponse(customToken);
         } catch (Exception e) {
-            return getTossAuthResponse(null,"decoded error");
+            log.error("Firebase authentication failed", e);
+            return createErrorResponse(e.getMessage());
         }
+    }
 
-        log.info("decPhone : {}", decPhone);
-        log.info("decEmail : {}", decEmail);
-        log.info("decCallingCode : {}", decCallingCode);
+    private boolean isFailedResponse(ResponseDto<?> response) {
+        return response != null && RESULT_TYPE_FAIL.equals(response.getResultType());
+    }
 
-        UserRecord.CreateRequest createRequest = new UserRecord.CreateRequest();
-        //이메일이 있으면 추가
-        if(!Strings.isNullOrEmpty(decEmail)) {
-            createRequest.setEmail(decEmail);
-            createRequest.setEmailVerified(true);
+    private DecryptedUserInfoDto decryptUserInfo(ResponseUserDto userDto) {
+        try {
+            String phone = decrypted(userDto.getPhone());
+            String email = decrypted(userDto.getEmail());
+            String callingCode = decrypted(userDto.getCallingCode());
+            return new DecryptedUserInfoDto(phone, email, callingCode);
+        } catch (Exception e) {
+            log.error("Failed to decrypt user information", e);
+            return null;
+        }
+    }
+
+    private String createFirebaseCustomToken(String userKey, DecryptedUserInfoDto info)
+            throws FirebaseAuthException {
+        UserRecord.CreateRequest createRequest = buildCreateRequest(userKey, info);
+        UserRecord userRecord = getOrCreateFirebaseUser(userKey, createRequest);
+        return firebaseAuth.createCustomToken(userRecord.getUid());
+    }
+
+    private UserRecord.CreateRequest buildCreateRequest(String userKey, DecryptedUserInfoDto info) {
+        UserRecord.CreateRequest request = new UserRecord.CreateRequest();
+        request.setUid(userKey);
+
+        // 이메일 설정
+        if (!Strings.isNullOrEmpty(info.getEmail())) {
+            request.setEmail(info.getEmail());
+            request.setEmailVerified(true);
         } else {
-            createRequest.setEmailVerified(false);
+            request.setEmailVerified(false);
         }
 
-        //전화번호가 있으면 추가
-        if(!Strings.isNullOrEmpty(decPhone)) {
-            createRequest.setPhoneNumber("+" + decCallingCode + decPhone.replaceFirst("^0", ""));
+        // 전화번호 설정
+        if (!Strings.isNullOrEmpty(info.getPhone())) {
+            String formattedPhone = formatPhoneNumber(info.getCallingCode(), info.getPhone());
+            request.setPhoneNumber(formattedPhone);
         }
-        createRequest.setUid(loginMeResult.getSuccess().getUserKey());
 
+        return request;
+    }
+
+    private String formatPhoneNumber(String callingCode, String phone) {
+        String normalizedPhone = phone.replaceFirst("^0", "");
+        return "+" + callingCode + normalizedPhone;
+    }
+
+    private UserRecord getOrCreateFirebaseUser(String uid, UserRecord.CreateRequest createRequest)
+            throws FirebaseAuthException {
         try {
-            // Firebase에 유저가 있는지 검사 후 없으면 생성
-            UserRecord userRecord;
-            try {
-                userRecord = firebaseAuth.getUser(loginMeResult.getSuccess().getUserKey());
-            } catch (FirebaseAuthException fe) {
-                userRecord = firebaseAuth.createUser(createRequest);
-            }
-
-            // Custom Token 생성
-            String customToken = firebaseAuth.createCustomToken(userRecord.getUid());
-
-            // 성공 처리 로직
-            return getTossAuthResponse(customToken, null);
-
-        } catch (Exception e) {
-            return getTossAuthResponse(null, e.getMessage());
+            return firebaseAuth.getUser(uid);
+        } catch (FirebaseAuthException e) {
+            log.info("User not found, creating new user: {}", uid);
+            return firebaseAuth.createUser(createRequest);
         }
+    }
+
+    private ResponseDto<String> createSuccessResponse(String customToken) {
+        return getTossAuthResponse(customToken, null);
+    }
+
+    private ResponseDto<String> createErrorResponse(String errorMessage) {
+        return getTossAuthResponse(null, errorMessage);
     }
 
     public ResponseDto<String> logoutByCallback(CallbackLogoutDto dto) {
