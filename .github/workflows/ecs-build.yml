@@ -40,6 +40,14 @@ jobs:
           mkdir -p src/main/resources
           echo "${{ secrets.HEYLOCAL_APP_PRIVATE_KEY }}" | base64 --decode > src/main/resources/firebase-adminsdk.json
 
+      - name: Restore key file
+        run: |
+          echo "${{ secrets.MTLS_KEY }}" | base64 --decode > src/main/resources/heylocal-key_private.key
+
+      - name: Restore crt file
+        run: |
+          echo "${{ secrets.MTLS_CRT }}" | base64 --decode > src/main/resources/heylocal-key_public.crt
+          
       - name: Set base64 encoding key in application properties
         run: |
           echo -e "\nbase64.encoded.aes.key=${{ secrets.HEYLOCAL_USERINFO_DECRYPT_KEY }}" >> src/main/resources/application.properties

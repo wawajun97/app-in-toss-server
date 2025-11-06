@@ -3,18 +3,23 @@ package kr.heylocal.server.util;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.netty.http.client.HttpClient;
+import reactor.netty.resources.ConnectionProvider;
 
 import javax.net.ssl.KeyManagerFactory;
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
 import java.security.KeyStore;
 import java.security.PrivateKey;
@@ -23,16 +28,12 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Base64;
-import java.util.Map;
 
-@Slf4j
 @Component
+@Slf4j
 public class TLSClientUtil {
-    @Value("${heylocal.key}")
-    private String HEYLOCAL_KEY;
-
-    @Value("${heylocal.crt}")
-    private String HEYLOCAL_CRT;
+    private final String KEY_FILE_NAME = "heylocal-key_private.key";
+    private final String CRT_FILE_NAME = "heylocal-key_public.crt";
 
     @Value("${toss.base.url}")
     private String BASE_URL;
@@ -40,13 +41,19 @@ public class TLSClientUtil {
     private SslContext sslContext;
     private HttpClient httpClient;
     private WebClient webClient;
-
+    private ConnectionProvider connectionProvider;
     @PostConstruct
     public void init() {
         try {
             this.sslContext = createSSLContext();
 
-            this.httpClient = HttpClient.create()
+            // ConnectionProvider 생성 및 저장
+            this.connectionProvider = ConnectionProvider.builder("custom")
+                    .maxConnections(100)
+                    .pendingAcquireMaxCount(1000)
+                    .build();
+
+            this.httpClient = HttpClient.create(this.connectionProvider)
                     .secure(ssl -> ssl.sslContext(this.sslContext));
 
             this.webClient = WebClient.builder()
@@ -54,6 +61,18 @@ public class TLSClientUtil {
                     .build();
         } catch (Exception e) {
             throw new RuntimeException("TLSClientUtil initialization failed.", e);
+        }
+    }
+
+    @PreDestroy
+    public void cleanup() {
+        try {
+            if (this.connectionProvider != null) {
+                this.connectionProvider.dispose();
+                log.info("ConnectionProvider disposed successfully");
+            }
+        } catch (Exception e) {
+            log.error("Error during cleanup", e);
         }
     }
 
@@ -93,7 +112,12 @@ public class TLSClientUtil {
     }
 
     private X509Certificate loadCertificate() throws Exception {
-        String content = HEYLOCAL_CRT
+        String crtFile;
+        try (InputStream in = new ClassPathResource(CRT_FILE_NAME).getInputStream()) {
+            crtFile = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+        }
+
+        String content = crtFile
                 .replace("-----BEGIN CERTIFICATE-----", "")
                 .replace("-----END CERTIFICATE-----", "")
                 .replaceAll("\\s", "");
@@ -103,7 +127,12 @@ public class TLSClientUtil {
     }
 
     private PrivateKey loadPrivateKey() throws Exception {
-        String content = HEYLOCAL_KEY
+        String keyFile;
+        try (InputStream in = new ClassPathResource(KEY_FILE_NAME).getInputStream()) {
+            keyFile = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+        }
+
+        String content = keyFile
                 .replace("-----BEGIN PRIVATE KEY-----", "")
                 .replace("-----END PRIVATE KEY-----", "")
                 .replaceAll("\\s", "");
