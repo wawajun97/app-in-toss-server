@@ -1,5 +1,7 @@
 {
     "compatibilities": [
+        "EC2",
+        "MANAGED_INSTANCES",
         "FARGATE"
     ],
     "containerDefinitions": [
@@ -8,35 +10,26 @@
             "environment": [],
             "environmentFiles": [],
             "essential": true,
-            "image": "939966404283.dkr.ecr.ap-southeast-2.amazonaws.com/heylocal:latest",
+            "image": "648721530572.dkr.ecr.ap-northeast-2.amazonaws.com/heylocal@sha256:c3dabef38589ba6dade7db686322c28b18d65b0ae464b1d95ae919807da71142",
             "logConfiguration": {
                 "logDriver": "awslogs",
                 "options": {
-                    "awslogs-group": "/ecs/heylocal",
-                    "awslogs-region": "ap-southeast-2",
-                    "awslogs-stream-prefix": "ecs",
-                    "awslogs-create-group": "true"
-                }
+                    "awslogs-group": "/ecs/heylocal-task",
+                    "awslogs-create-group": "true",
+                    "awslogs-region": "ap-northeast-2",
+                    "awslogs-stream-prefix": "ecs"
+                },
+                "secretOptions": []
             },
             "mountPoints": [],
-            "name": "heylocal",
+            "name": "heylocal-container",
             "portMappings": [
                 {
                     "appProtocol": "http",
-                    "containerPort": 8080,
-                    "hostPort": 8080,
-                    "name": "heylocal-dev",
+                    "containerPort": 80,
+                    "hostPort": 80,
+                    "name": "heylocal-container-80-tcp",
                     "protocol": "tcp"
-                }
-            ],
-            "secrets": [
-                {
-                    "name": "heylocal.key",
-                    "valueFrom": "arn:aws:secretsmanager:ap-southeast-2:939966404283:secret:heylocalSecret-vjAUbS:heylocal.key::"
-                },
-                {
-                    "name": "heylocal.crt",
-                    "valueFrom": "arn:aws:secretsmanager:ap-southeast-2:939966404283:secret:heylocalSecret-vjAUbS:heylocal.crt::"
                 }
             ],
             "systemControls": [],
@@ -45,16 +38,29 @@
         }
     ],
     "cpu": "1024",
-    "executionRoleArn": "arn:aws:iam::939966404283:role/ecsTaskExecutionRole",
-    "family": "heylocal",
+    "enableFaultInjection": false,
+    "executionRoleArn": "arn:aws:iam::648721530572:role/ecsTaskExecutionRole",
+    "family": "heylocal-task",
     "memory": "3072",
     "networkMode": "awsvpc",
     "placementConstraints": [],
-    "registeredAt": "2025-09-29T06:36:03.768Z",
-    "registeredBy": "arn:aws:iam::939966404283:user/admin",
+    "registeredAt": "2025-11-06T11:19:09.569Z",
+    "registeredBy": "arn:aws:iam::648721530572:user/heylocalUser",
     "requiresAttributes": [
         {
+            "name": "com.amazonaws.ecs.capability.logging-driver.awslogs"
+        },
+        {
+            "name": "ecs.capability.execution-role-awslogs"
+        },
+        {
             "name": "com.amazonaws.ecs.capability.ecr-auth"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.21"
         },
         {
             "name": "ecs.capability.execution-role-ecr-pull"
@@ -64,6 +70,9 @@
         },
         {
             "name": "ecs.capability.task-eni"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.29"
         }
     ],
     "requiresCompatibilities": [
@@ -75,7 +84,7 @@
         "operatingSystemFamily": "LINUX"
     },
     "status": "ACTIVE",
-    "taskDefinitionArn": "arn:aws:ecs:ap-southeast-2:939966404283:task-definition/heylocal:1",
+    "taskDefinitionArn": "arn:aws:ecs:ap-northeast-2:648721530572:task-definition/heylocal-task:1",
     "volumes": [],
     "tags": []
 }
