@@ -73,7 +73,7 @@ jobs:
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: task-def.json
-          container-name: heylocal
+          container-name: heylocal-container
           image: ${{ steps.login-ecr.outputs.registry }}/${{ secrets.HEYLOCAL_REPOSITORY }}:latest
 
       - name: Deploy Amazon ECS task definition
