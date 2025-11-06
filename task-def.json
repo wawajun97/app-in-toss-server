@@ -10,7 +10,7 @@
             "environment": [],
             "environmentFiles": [],
             "essential": true,
-            "image": "648721530572.dkr.ecr.ap-northeast-2.amazonaws.com/heylocal@sha256:c3dabef38589ba6dade7db686322c28b18d65b0ae464b1d95ae919807da71142",
+            "image": "648721530572.dkr.ecr.ap-northeast-2.amazonaws.com/heylocal:lastest",
             "logConfiguration": {
                 "logDriver": "awslogs",
                 "options": {
