@@ -59,7 +59,7 @@ jobs:
           key: ${{ secrets.HEYLOCAL_DEV_PRIVATEKEY }}
           port: 22
           source: heylocal.jar
-          target: /opt/temp/
+          target: /opt/app/
 
       - name: Deploy and Restart App on EC2
         uses: appleboy/ssh-action@v1.0.3
@@ -70,6 +70,5 @@ jobs:
           script: |
             echo "=== Deploying heylocal.jar ==="
             sudo systemctl stop heylocal || true
-            sudo cp /opt/temp/heylocal.jar /opt/app/heylocal.jar
             sudo nohup java -jar /opt/app/heylocal.jar > /opt/app/app.log 2>&1 &
             echo "=== heylocal service restarted ==="
