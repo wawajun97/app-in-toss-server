@@ -70,5 +70,5 @@ jobs:
           script: |
             echo "=== Deploying heylocal.jar ==="
             sudo systemctl stop heylocal || true
-            sudo nohup java -jar /opt/app/heylocal.jar > /opt/app/app.log 2>&1 &
+            sudo nohup java -jar /opt/app/heylocal.jar > /opt/app/heylocal.log 2>&1 &
             echo "=== heylocal service restarted ==="
