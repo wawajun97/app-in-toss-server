@@ -68,7 +68,4 @@ jobs:
           username: ${{ secrets.HEYLOCAL_DEV_USERNAME }}
           key: ${{ secrets.HEYLOCAL_DEV_PRIVATEKEY }}
           script: |
-            echo "=== Deploying heylocal.jar ==="
-            sudo systemctl stop heylocal || true
-            sudo nohup java -jar /opt/app/heylocal.jar > /opt/app/logs/heylocal.log 2>&1 &
-            echo "=== heylocal service restarted ==="
+            sudo systemctl restart heylocal.service
