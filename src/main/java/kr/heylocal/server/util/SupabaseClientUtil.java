@@ -14,8 +14,8 @@ import java.util.Map;
 @Slf4j
 public class SupabaseClientUtil {
     private final String PREFER = "return=representation";
-    private final String BASE_URL = "https://rlqdtdrozvbvmkobapnc.supabase.co";
-//    private final String BASE_URL = "https://ssiexjrlplmuftarrfjg.supabase.co";
+//    private final String BASE_URL = "https://rlqdtdrozvbvmkobapnc.supabase.co"; //개발
+    private final String BASE_URL = "https://ssiexjrlplmuftarrfjg.supabase.co"; //상용
 
     @Value("${supabase.api.key}")
     private String API_KEY;
