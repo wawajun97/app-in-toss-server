@@ -49,7 +49,7 @@ public class LoginController {
     }
 
     //콜백을 통해 로그인 끊기
-    @PatchMapping("logout")
+    @PostMapping("logout")
     public ResponseDto<String> logoutByCallback(@RequestBody CallbackLogoutDto callbackLogoutDto) {
         return loginService.logoutByCallback(callbackLogoutDto);
     }
